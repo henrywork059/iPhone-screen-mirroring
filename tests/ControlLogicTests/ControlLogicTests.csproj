@@ -8,6 +8,5 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../src/MirrorControl/MirrorQualityPreset.cs" Link="MirrorQualityPreset.cs" />
-    <Compile Include="../../src/MirrorControl/HidProtocol.cs" Link="HidProtocol.cs" />
   </ItemGroup>
 </Project>
