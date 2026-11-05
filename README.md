@@ -18,6 +18,12 @@ It **does not contain UxPlay**, cannot mirror an iPhone, and will **not open an 
 
 This **can open listening network ports**. No full security audit, real iPhone acceptance test or signed installer exists. **Do not bypass SmartScreen or antivirus warnings.** The default controller remains locked.
 
+## New quality and external-input prototypes (November 2026)
+
+- Select **1080p/30, 1080p/60, 1440p/60 (default), or 4K/30** in the controller before starting a mirror session. HEVC and real-device support are experimental; the iPhone can negotiate a lower resolution or frame rate.
+- The beta has an optional **Input pad (ESP32)** for basic mouse movement/click/drag/wheel and simple keyboard input. This **requires a separately flashed USB ESP32 BLE HID device paired with the iPhone**; no generic Windows Bluetooth control is claimed. The UxPlay video remains a separate window and does not receive clicks directly.
+- Setup and hardware limitations: [INPUT_BRIDGE.md](docs/INPUT_BRIDGE.md).
+
 ## Current validation results (2026-11-05)
 
 - **PASSED:** full patched experimental Windows UxPlay source build; no network listener was started.

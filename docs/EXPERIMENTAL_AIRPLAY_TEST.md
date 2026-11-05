@@ -33,6 +33,16 @@ The embedded SHA-256 of the bundled native UxPlay executable is `23F2393729DC291
 - Asks for explicit confirmation **at every start**, validates Windows Private connection profiles, uses upstream `-pw` without password to show a new random 4-digit PIN each connection.
 - Uploads a short-lived TEST artifact containing the GUI, patched backend, GStreamer runtime files and upstream patched corresponding source with license notices.
 
+## Higher-quality mirroring profiles (new)
+
+The Windows controller now offers **Compatible 1080p/30**, **Smooth 1080p/60**, **Sharper 1440p/60** (default), and **Ultra 4K/30**. The last two request UxPlay HEVC support (`-h265`) and require matching GStreamer H.265 parser/decoder plugins, which CI checks. A requested resolution/frame rate is advisory; some iPhones transmit less than requested. If a high-quality option fails, select a **1080p** profile and reconnect.
+
+## Experimental external mouse and keyboard
+
+The **Input pad (ESP32)** button in the mirroring-enabled GUI opens an optional USB control-pad interface that sends mouse/keyboard commands through an external ESP32 Bluetooth HID bridge. The firmware source and Arduino setup are in [INPUT_BRIDGE.md](INPUT_BRIDGE.md). The bridge must be flashed, USB-connected to Windows, and paired with your iPhone using AssistiveTouch.
+
+**It does not accept clicks directly on the UxPlay video window** because that video is rendered by a separate process. Bluetooth support needs compatible ESP32 hardware and has not been validated with a physical iPhone; the Windows UI and firmware compilation checks are separate.
+
 ## Limitations and risk
 
 **This is not security-audited software and not recommended for normal use.** The experimental UxPlay AirPlay protocol and mDNS parsing surface remains unaudited. User confirmation and the Private network profile do **not** confine the process. Existing firewall rules may expose a network listener beyond the intended iPhone. Avoid sensitive content and untrusted networks.
