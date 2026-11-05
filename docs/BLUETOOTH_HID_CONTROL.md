@@ -10,6 +10,18 @@ target laptop's diagnostic already reported \`LE=True, Peripheral=True\`,
 successful HID GATT service initialization, and advertising \`Started\`.
 **Actual iPhone pairing and pointer movement have not yet been confirmed.**
 
+## Verified Windows test package (build + upload)
+
+The experimental Windows build has passed:
+[GitHub Actions #42066227443](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/42066227443).
+Under **Artifacts**, download \`iPhoneMirror-Experimental-AirPlay-TEST\`
+and extract its inner ZIP. The inner ZIP is **204,998,910 bytes**,
+SHA-256 \`B39F7A198243951D45145CD4AEBDE82383FCC394FF520D4D260802590F775414\`.
+The artifact is retained until **November 12, 2026**.
+
+This confirms native and managed CI builds, archive checksums, and packaging,
+not successful pairing with a physical iPhone.
+
 ## Pairing and first test
 
 1. Exit the earlier standalone **BleHid.Cli.exe** at its \`>\` prompt with
