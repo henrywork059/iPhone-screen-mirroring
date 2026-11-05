@@ -6,6 +6,12 @@ A local-first iPhone-to-Windows 11 AirPlay mirroring project.
 
 > **Prototype source available; Windows/iPhone end-to-end test pending.** This repository does **not** include an AirPlay engine, prebuilt installer, or verified working release.
 
+## Offline Windows UI preview (available for user testing)
+
+The **UI-only** self-contained Windows 11 preview is available as a short-lived GitHub Actions artifact: [successful Windows preview run](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/41978061900). Download the `iPhoneMirror-Offline-UI-Preview` artifact and extract the contained `offline-controller.zip`.
+
+It **does not contain UxPlay**, cannot mirror an iPhone, and will **not open an AirPlay listener**. Confirm that the window opens and clearly shows the disabled **Launch blocked** control. See [safe UI test instructions](docs/OFFLINE_CONTROLLER_PACKAGE.md). Do not bypass Windows security warnings for unsigned binaries.
+
 ## Current validation results (2026-11-05)
 
 - **PASSED:** full patched experimental Windows UxPlay source build; no network listener was started.
