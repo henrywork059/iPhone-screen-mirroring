@@ -16,7 +16,21 @@ sed -i 's/\r$//' "$tmp/uxplay/lib/mirror_buffer.c"
 sed 's/\r$//' "$root/patches/uxplay-experimental-mirror-short-frame.patch" > "$tmp/fix.patch"
 git -C "$tmp/uxplay" apply --check "$tmp/fix.patch"
 git -C "$tmp/uxplay" apply "$tmp/fix.patch"
-echo 'Source patch applied. Running isolated C regression (no network listener).'
+# The bounds patch applies ONLY to the exact pinned source and fails closed if
+# a source hunk changes. Install the testable header in upstream's lib folder.
+sed -i 's/\r$//' "$tmp/uxplay/lib/raop_rtp_mirror.c"
+cp "$root/patches/uxplay_mirror_validation.h" "$tmp/uxplay/lib/uxplay_mirror_validation.h"
+sed 's/\r$//' "$root/patches/uxplay-mirror-rtp-bounds.patch" > "$tmp/rtp-bounds.patch"
+git -C "$tmp/uxplay" apply --check "$tmp/rtp-bounds.patch"
+git -C "$tmp/uxplay" apply "$tmp/rtp-bounds.patch"
+# Track the new header in the matching source diff; it is also included in
+# the full corresponding-source archive.
+git -C "$tmp/uxplay" add -N lib/uxplay_mirror_validation.h
+echo 'Short-frame and RTP bounds patches applied. Running isolated C regressions (no network listener).'
+gcc -std=c11 -g -O2 -Wall -Wextra -Werror \
+  "$root/tests/native/mirror_validation_regression.c" \
+  -o "$tmp/mirror_validation_regression.exe"
+"$tmp/mirror_validation_regression.exe"
 gcc -std=c11 -g -O2 -DWIN32 -D_WIN32 -Wall -Wextra -I "$tmp/uxplay/lib" \
   "$root/tests/native/mirror_buffer_regression.c" -o "$tmp/test_stub.exe" -lws2_32
 "$tmp/test_stub.exe"
@@ -50,8 +64,9 @@ if [[ -n "${RECEIVER_STAGING_DIR:-}" ]]; then
   # in any test artifact that conveys the binary. Not an official release.
   tar -C "$tmp/uxplay" --exclude=.git -czf "$RECEIVER_STAGING_DIR/source-notices/uxplay-patched-corresponding-source.tar.gz" .
   cp "$root/patches/uxplay-experimental-mirror-short-frame.patch" "$RECEIVER_STAGING_DIR/source-notices/candidate-short-frame.patch"
+  cp "$root/patches/uxplay-mirror-rtp-bounds.patch" "$RECEIVER_STAGING_DIR/source-notices/rtp-bounds.patch"
   printf "%s\n" "$pinned" > "$RECEIVER_STAGING_DIR/source-notices/UPSTREAM-COMMIT"
-  git -C "$tmp/uxplay" diff -- lib/mirror_buffer.c > "$RECEIVER_STAGING_DIR/source-notices/applied-source-diff.patch"
+  git -C "$tmp/uxplay" diff -- lib/mirror_buffer.c lib/raop_rtp_mirror.c lib/uxplay_mirror_validation.h > "$RECEIVER_STAGING_DIR/source-notices/applied-source-diff.patch"
   sha256sum "$exe" > "$RECEIVER_STAGING_DIR/source-notices/development-binary-sha256.txt"
   echo "Unpublished receiver staged for CI dependency inspection only."
 fi
