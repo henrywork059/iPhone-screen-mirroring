@@ -1,0 +1,35 @@
+diff --git a/lib/mirror_buffer.c b/lib/mirror_buffer.c
+--- a/lib/mirror_buffer.c
++++ b/lib/mirror_buffer.c
+@@ -92,10 +92,27 @@
+ }
+ 
+ void mirror_buffer_decrypt(mirror_buffer_t *mirror_buffer, unsigned char* input, unsigned char* output, int inputLen) {
+-    // Start decrypting
+-    if (mirror_buffer->nextDecryptCount > 0) {//mirror_buffer->nextDecryptCount = 10
+-        for (int i = 0; i < mirror_buffer->nextDecryptCount; i++) {
+-            output[i] = (input[i] ^ mirror_buffer->og[(16 - mirror_buffer->nextDecryptCount) + i]);
++    // Reject invalid arguments before using pointers or calculating offsets.
++    if (!mirror_buffer || !mirror_buffer->aes_ctx || inputLen < 0 ||
++        (inputLen > 0 && (!input || !output))) {
++        return;
++    }
++    if (inputLen == 0) {
++        return;
++    }
++    // Consume at most the input length from the cached AES-CTR keystream.
++    if (mirror_buffer->nextDecryptCount > 0) {
++        int n = mirror_buffer->nextDecryptCount;
++        if (n > 16) {
++            return;
++        }
++        int consumed = n < inputLen ? n : inputLen;
++        for (int i = 0; i < consumed; i++) {
++            output[i] = input[i] ^ mirror_buffer->og[(16 - n) + i];
++        }
++        if (consumed < n) {
++            mirror_buffer->nextDecryptCount = n - consumed;
++            return;
+         }
+     }
+     // Handling encrypted bytes
