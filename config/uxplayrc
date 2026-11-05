@@ -1,0 +1,2 @@
+# Intentionally empty. The controller supplies explicit UxPlay options.
+# UxPlay is launched with -rc <this file> to avoid arbitrary user-level startup options.
