@@ -20,7 +20,7 @@ gcc -std=c11 -g -O2 -DWIN32 -D_WIN32 -Wall -Wextra \
   -o "$tmp/mirror_stub_regression.exe" -lws2_32
 "$tmp/mirror_stub_regression.exe"
 gcc -std=c11 -g -O2 -DWIN32 -D_WIN32 -ffunction-sections -fdata-sections -Wall -Wextra \
-  -I "$tmp/uxplay/lib" "$tmp/uxplay/lib/mirror_buffer.c" "$tmp/uxplay/lib/crypto.c" \
+  -I "$tmp/uxplay/lib" "$tmp/uxplay/lib/mirror_buffer.c" "$tmp/uxplay/lib/crypto.c" "$tmp/uxplay/lib/utils.c" \
   "$root/tests/native/mirror_buffer_openssl_regression.c" \
   -Wl,--gc-sections -lcrypto -lws2_32 -lcrypt32 -lbcrypt \
   -o "$tmp/mirror_openssl_regression.exe"
