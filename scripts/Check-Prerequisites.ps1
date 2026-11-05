@@ -13,15 +13,15 @@ if (Test-Path -LiteralPath $UxPlayPath -PathType Leaf) {
     Write-Warning "UxPlay missing: $UxPlayPath (see docs/WINDOWS_SETUP.md)"
 }
 $ids = @(Get-NetAdapter -Physical | Where-Object { $_.Status -eq 'Up' } | ForEach-Object { $_.ifIndex })
-$p = @(Get-NetConnectionProfile | Where-Object { $ids -contains $_.InterfaceIndex })
-if ($p.Count -eq 0) {
+$p = @(Get-NetConnectionProfile)
+if ($p.Count -eq 0 -or @($p | Where-Object { $ids -contains $_.InterfaceIndex }).Count -eq 0) {
     Write-Warning 'No connected physical network profiles found.'
 } else {
     $p | Format-Table -Property Name,NetworkCategory,InterfaceAlias -AutoSize
     if (@($p | Where-Object { $_.NetworkCategory -ne 'Private' }).Count -gt 0) {
-        Write-Warning 'Receiver will refuse to start until all connected physical networks are Private.'
+        Write-Warning 'Receiver will refuse to start until all connected networks, including VPN and virtual profiles, are Private.'
     } else {
-        Write-Host '[OK] Physical network profiles are Private'
+        Write-Host '[OK] Connected network profiles are Private (not proof of isolation)'
     }
 }
 Write-Host 'The receiver does not automatically configure Windows Firewall.'

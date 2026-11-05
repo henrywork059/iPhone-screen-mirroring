@@ -25,12 +25,12 @@ if ([IO.Path]::GetFileName($UxPlayPath) -ine 'uxplay.exe') {
     throw 'The executable must be named uxplay.exe.'
 }
 $ids = @(Get-NetAdapter -Physical | Where-Object { $_.Status -eq 'Up' } | ForEach-Object { $_.ifIndex })
-$profiles = @(Get-NetConnectionProfile | Where-Object { $ids -contains $_.InterfaceIndex })
-if ($profiles.Count -eq 0) {
+$profiles = @(Get-NetConnectionProfile)
+if ($profiles.Count -eq 0 -or @($profiles | Where-Object { $ids -contains $_.InterfaceIndex }).Count -eq 0) {
     throw 'No connected physical network profile detected. Refusing to start.'
 }
 if (@($profiles | Where-Object { $_.NetworkCategory -ne 'Private' }).Count -gt 0) {
-    throw 'All connected physical network profiles must be Private. Refusing to start on public or unidentified networks.'
+    throw 'All connected network profiles, including VPN or virtual interfaces, must be Private. Refusing to start on Public or unidentified networks.'
 }
 $config = Join-Path (Split-Path -Parent $PSScriptRoot) 'config\uxplayrc'
 if (-not (Test-Path -LiteralPath $config)) { throw "Missing safety configuration: $config" }

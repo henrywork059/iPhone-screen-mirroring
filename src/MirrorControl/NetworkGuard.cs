@@ -19,15 +19,15 @@ internal static class NetworkGuard
         const string script = """
             $ErrorActionPreference = 'Stop'
             $ids = @(Get-NetAdapter -Physical | Where-Object { $_.Status -eq 'Up' } | ForEach-Object { $_.ifIndex })
-            $profiles = @(Get-NetConnectionProfile | Where-Object { $ids -contains $_.InterfaceIndex })
-            if ($profiles.Count -eq 0) {
+            $profiles = @(Get-NetConnectionProfile)
+            if ($profiles.Count -eq 0 -or @($profiles | Where-Object { $ids -contains $_.InterfaceIndex }).Count -eq 0) {
                 'BLOCK:No connected physical network profile was detected.'
             } elseif (@($profiles | Where-Object { $_.NetworkCategory -ne 'Private' }).Count -gt 0) {
-                'BLOCK:All connected physical network profiles must be Private. Do not use this on public Wi-Fi.'
+                'BLOCK:Every connected network profile (including virtual/VPN) must be Private.'
             } else {
-                'ALLOW:Private network profile detected.'
+                'ALLOW:Private network profiles detected (not a guarantee of trusted network isolation).'
             }
-            """;
+                        """;
 
         string executable = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.System),
