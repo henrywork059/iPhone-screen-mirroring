@@ -6,10 +6,38 @@ stage="${1:?stage directory required}"
 [[ -s "$stage/bin/uxplay.exe" ]] || { echo "Missing staged UxPlay" >&2; exit 1; }
 mkdir -p "$stage/lib/gstreamer-1.0" "$stage/libexec/gstreamer-1.0"
 if [[ ! -d /ucrt64/lib/gstreamer-1.0 ]]; then echo "GStreamer plugin directory missing" >&2; exit 1; fi
-find /ucrt64/lib/gstreamer-1.0 -maxdepth 1 -type f \( -iname "*.dll" -o -iname "*.dll.a" \) -iname "*.dll" -exec cp -p "{}" "$stage/lib/gstreamer-1.0/" \;
+# Only bundle plugin providers needed for mirroring H.264/H.265 and AAC/ALAC.
+# Keep a conservative set for UxPlay's optional JPEG/playbin paths; do NOT
+# include the complete global GStreamer registry or unrelated network plugins.
+elements='appsrc queue capsfilter h264parse h265parse avdec_h264 avdec_h265 avdec_aac avdec_alac decodebin typefind videoconvert videoscale audioconvert audioresample volume level d3d11videosink wasapisink videoflip jpegdec imagefreeze textoverlay playbin playbin3'
+for element in $elements; do
+  details="$(gst-inspect-1.0 "$element")" || {
+    echo "Missing required GStreamer element: $element" >&2; exit 1;
+  }
+  filename="$(printf '%s\n' "$details" | awk '$1 == "Filename" { print $2; exit }')"
+  [[ -n "$filename" ]] || { echo "No provider filename for $element" >&2; exit 1; }
+  plugin="$(printf '%s' "$filename" | tr '\\' '/' | awk -F/ '{print $NF}')"
+  [[ "$plugin" == *.dll && -f "/ucrt64/lib/gstreamer-1.0/$plugin" ]] || {
+    echo "Invalid or unavailable provider for $element: $filename" >&2; exit 1;
+  }
+  cp -p "/ucrt64/lib/gstreamer-1.0/$plugin" "$stage/lib/gstreamer-1.0/"
+done
 plugin_count="$(find "$stage/lib/gstreamer-1.0" -maxdepth 1 -type f -iname "*.dll" | wc -l)"
-[[ "$plugin_count" -gt 0 ]] || { echo "No GStreamer modules found" >&2; exit 1; }
-echo "Packaged GStreamer plugins: $plugin_count"
+[[ "$plugin_count" -gt 0 && "$plugin_count" -le 35 ]] || {
+  echo "GStreamer plugin subset unexpectedly large or empty: $plugin_count" >&2; exit 1;
+}
+echo "Allowlisted GStreamer plugins: $plugin_count"
+# Inspect staged providers in isolation; no fallback to system plugins.
+for element in $elements; do
+  GST_PLUGIN_PATH_1_0="$stage/lib/gstreamer-1.0" \
+  GST_PLUGIN_SYSTEM_PATH_1_0='' \
+  GST_REGISTRY="$stage/gstreamer-test-registry.bin" \
+    gst-inspect-1.0 "$element" >/dev/null || {
+      echo "Staged plugin subset cannot provide $element" >&2; exit 1;
+    }
+done
+rm -f "$stage/gstreamer-test-registry.bin"
+
 if [[ -f /ucrt64/libexec/gstreamer-1.0/gst-plugin-scanner.exe ]]; then
   cp -p /ucrt64/libexec/gstreamer-1.0/gst-plugin-scanner.exe "$stage/libexec/gstreamer-1.0/"
 fi
