@@ -1,0 +1,78 @@
+name: Portable test-bundle packaging inspection (unpublished)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/ci/stage-native-runtime.sh
+      - scripts/ci/build-full-receiver-windows.sh
+      - src/MirrorControl/**
+      - .github/workflows/pretest-bundle.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-bundle:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Install MSYS2 UCRT64 runtime build dependencies
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-openssl
+            mingw-w64-ucrt-x86_64-libplist
+            mingw-w64-ucrt-x86_64-gstreamer
+            mingw-w64-ucrt-x86_64-gst-plugins-base
+            mingw-w64-ucrt-x86_64-gst-plugins-good
+            mingw-w64-ucrt-x86_64-gst-plugins-bad
+            mingw-w64-ucrt-x86_64-gst-libav
+      - name: Compile patched experimental receiver and gather runtime dependencies
+        shell: msys2 {0}
+        run: |
+          RECEIVER_STAGING_DIR="$(pwd)/_review_stage/native" bash scripts/ci/build-full-receiver-windows.sh
+          bash scripts/ci/stage-native-runtime.sh "$(pwd)/_review_stage/native"
+      - name: Publish local controller and inspect combined ZIP without uploading
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $gate = Get-Content src/MirrorControl/BackendSecurityGate.cs -Raw
+          if ($gate -notmatch 'internal static bool IsBlocked\s*=>\s*true\s*;') {
+            throw 'Refusing to package: receiver launch gate is not active.'
+          }
+          dotnet publish src/MirrorControl/MirrorControl.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=false --output _review_stage/desktop
+          if ($LASTEXITCODE -ne 0) { throw 'Controller publish failed.' }
+          Copy-Item _review_stage/native -Destination _review_stage/desktop/native -Recurse
+          foreach ($item in @(
+            '_review_stage/desktop/MirrorControl.exe',
+            '_review_stage/desktop/config/uxplayrc',
+            '_review_stage/desktop/native/bin/uxplay.exe',
+            '_review_stage/desktop/native/lib/gstreamer-1.0',
+            '_review_stage/desktop/native/SHA256SUMS.txt',
+            '_review_stage/desktop/native/source-notices/UXPLAY-GPL-3.0-LICENSE')) {
+            if (-not (Test-Path $item)) { throw "Missing package component: $item" }
+          }
+          Set-Content -Path _review_stage/desktop/DO-NOT-RUN-SECURITY-HOLD.txt -Value @(
+            'Experimental candidate. NOT APPROVED for installation or use.',
+            'The app Start control is intentionally disabled.',
+            'The native backend has not passed complete security or real iPhone tests.')
+          Compress-Archive -Path _review_stage/desktop/* -DestinationPath _review_stage/offline-candidate.zip -CompressionLevel Optimal
+          $zip = Get-Item _review_stage/offline-candidate.zip
+          if ($zip.Length -gt 1500000000) { throw 'Unreviewed ZIP unexpectedly too large' }
+          Write-Host ('Unpublished candidate ZIP bytes: ' + $zip.Length)
+          Write-Host ('Unpublished candidate SHA256: ' + (Get-FileHash $zip.FullName -Algorithm SHA256).Hash)
+          Write-Host 'Validated structure only. No installer, artifact, release, or network listener is published.'
+      # Deliberately no upload-artifact or release action.
