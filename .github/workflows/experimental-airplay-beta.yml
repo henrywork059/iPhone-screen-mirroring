@@ -75,6 +75,24 @@ jobs:
           $ErrorActionPreference = 'Stop'
           pwsh -NoProfile -File scripts/ci/Test-NoNetworkRuntimeLoad.ps1 -Executable _beta/native/bin/uxplay.exe -PluginDirectory _beta/native/lib/gstreamer-1.0
           if ($LASTEXITCODE -ne 0) { throw 'Native help-only process check failed' }
+      - name: Ensure hardware-bridge implementation is excluded
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($removed in @(
+            'src/MirrorControl/HidControlForm.cs',
+            'src/MirrorControl/HidProtocol.cs',
+            'firmware/esp32_hid_bridge/esp32_hid_bridge.ino',
+            'docs/INPUT_BRIDGE.md')) {
+              if (Test-Path $removed) { throw "Removed bridge code unexpectedly present: $removed" }
+          }
+          if ((Get-Content src/MirrorControl/MirrorForm.cs -Raw) -match 'Input pad \(ESP32\)|new HidControlForm') {
+            throw 'Hardware input control has been reintroduced.'
+          }
+          if ((Get-Content src/MirrorControl/MirrorControl.csproj -Raw) -match 'System.IO.Ports') {
+            throw 'Unneeded serial port dependency found.'
+          }
+          Write-Host 'Hardware input bridge excluded; resolution selection retained.'
       - name: Build only the explicit experimental controller variant
         shell: pwsh
         run: |
