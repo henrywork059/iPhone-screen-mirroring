@@ -46,6 +46,9 @@ if [[ -n "${RECEIVER_STAGING_DIR:-}" ]]; then
   mkdir -p "$RECEIVER_STAGING_DIR/bin" "$RECEIVER_STAGING_DIR/source-notices"
   cp "$exe" "$RECEIVER_STAGING_DIR/bin/uxplay.exe"
   cp "$tmp/uxplay/LICENSE" "$RECEIVER_STAGING_DIR/source-notices/UXPLAY-GPL-3.0-LICENSE"
+  # Include the full patched corresponding UxPlay source (without Git metadata)
+  # in any test artifact that conveys the binary. Not an official release.
+  tar -C "$tmp/uxplay" --exclude=.git -czf "$RECEIVER_STAGING_DIR/source-notices/uxplay-patched-corresponding-source.tar.gz" .
   cp "$root/patches/uxplay-experimental-mirror-short-frame.patch" "$RECEIVER_STAGING_DIR/source-notices/candidate-short-frame.patch"
   printf "%s\n" "$pinned" > "$RECEIVER_STAGING_DIR/source-notices/UPSTREAM-COMMIT"
   git -C "$tmp/uxplay" diff -- lib/mirror_buffer.c > "$RECEIVER_STAGING_DIR/source-notices/applied-source-diff.patch"
