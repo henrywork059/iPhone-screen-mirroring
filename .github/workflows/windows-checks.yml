@@ -50,8 +50,15 @@ jobs:
             throw 'SECURITY HOLD regression: PowerShell receiver launcher was unblocked.'
           }
           $processController = Get-Content src/MirrorControl/ReceiverProcess.cs -Raw
-          if ($processController -notmatch 'if \(BackendSecurityGate.IsBlocked\)') {
-            throw 'SECURITY HOLD regression: receiver process no longer checks the launch gate.'
+          $receiverIdentity = Get-Content src/MirrorControl/ReceiverIdentity.cs -Raw
+          if ($processController -notmatch 'ReceiverIdentity.Validate\(executable\)') {
+            throw 'SECURITY HOLD regression: receiver process does not validate the binary.'
+          }
+          if ($receiverIdentity -notmatch 'if \(BackendSecurityGate.IsBlocked\)') {
+            throw 'SECURITY HOLD regression: binary validation no longer enforces the default gate.'
+          }
+          if ($gate -notmatch '(?s)#if EXPERIMENTAL_RECEIVER.*IsBlocked\s*=>\s*false.*#else.*IsBlocked\s*=>\s*true') {
+            throw 'Opt-in and default release gates are not separated.'
           }
           Write-Host 'Emergency security hold remains active. This is not an audit.'
       - name: Build Windows controller
