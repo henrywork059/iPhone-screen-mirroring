@@ -1,0 +1,40 @@
+name: Offline mirroring packet validation fuzzer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'patches/uxplay_mirror_validation.h'
+      - 'tests/native/mirror_validation_fuzz.c'
+      - '.github/workflows/uxplay-security-fuzz.yml'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz-bounded-codec-records:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Build bounds fuzzer with AddressSanitizer and UBSan
+        run: |
+          set -euo pipefail
+          clang -std=c11 -O1 -g -Wall -Wextra -Werror \
+            -fsanitize=fuzzer,address,undefined \
+            tests/native/mirror_validation_fuzz.c -o /tmp/mirror_validation_fuzzer
+      - name: Exercise bounded codec parser with coverage feedback
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fuzz_corpus
+          printf '\240\000\001\000\003\012\024\036' >/tmp/fuzz_corpus/valid_vps
+          printf '\000\000\000\001' >/tmp/fuzz_corpus/truncated_nal
+          printf '\377\377\377\377' >/tmp/fuzz_corpus/oversized_length
+          ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
+          UBSAN_OPTIONS=halt_on_error=1 \
+            /tmp/mirror_validation_fuzzer -runs=60000 -max_len=512 /tmp/fuzz_corpus
+      # This tests the validation primitives, NOT the entire AirPlay protocol.
+      # No compiled receiver artifact, network listener, or executable is uploaded.
