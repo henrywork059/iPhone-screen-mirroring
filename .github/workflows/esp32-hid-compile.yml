@@ -1,0 +1,38 @@
+name: ESP32 mouse-keyboard bridge compile (hardware not tested)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'firmware/esp32_hid_bridge/**'
+      - '.github/workflows/esp32-hid-compile.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-esp32:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install pinned Arduino ESP32 toolchain
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core install esp32:esp32@2.0.17 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+      - name: Fetch pinned MIT BLE keyboard-mouse library
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/arduino-libraries
+          git clone --quiet https://github.com/blackketter/ESP32-BLE-Combo.git /tmp/arduino-libraries/BleCombo
+          git -C /tmp/arduino-libraries/BleCombo checkout --quiet --detach b25c1cb9dbff64374d2fd4ad307a184506eb9232
+          test "$(git -C /tmp/arduino-libraries/BleCombo rev-parse HEAD)" = b25c1cb9dbff64374d2fd4ad307a184506eb9232
+      - name: Compile BLE HID firmware for original ESP32
+        run: |
+          arduino-cli compile --fqbn esp32:esp32:esp32 \
+            --libraries /tmp/arduino-libraries \
+            firmware/esp32_hid_bridge
+      # No firmware file is uploaded or flashed; no physical Bluetooth test is possible in CI.
