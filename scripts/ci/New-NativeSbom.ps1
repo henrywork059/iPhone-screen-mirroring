@@ -11,20 +11,20 @@ $shaPath = Join-Path $root 'SHA256SUMS.txt'
 if (-not (Test-Path -LiteralPath $shaPath -PathType Leaf)) {
     throw 'Native SHA256SUMS inventory is missing.'
 }
+# Read the staged files directly; sha256sum escapes unusual filenames and
+# its text format is not suitable as a universal manifest parser on Windows.
+$nativePrefix = $root.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+$binaryFiles = @(Get-ChildItem -LiteralPath $root -File -Recurse |
+    Where-Object { $_.Extension -in @('.dll', '.exe') } | Sort-Object FullName)
 $components = @(
-    foreach ($line in Get-Content -LiteralPath $shaPath) {
-        if ($line -notmatch '^([0-9A-Fa-f]{64})  \./(.+)$') {
-            throw "Malformed native checksum record."
-        }
-        $hash = $Matches[1].ToUpperInvariant()
-        $name = $Matches[2].Replace('\', '/')
-        if ($name -match '\.(dll|exe)$') {
-            [ordered]@{
-                type = 'file'
-                name = $name
-                'bom-ref' = "native/$name"
-                hashes = @([ordered]@{ alg = 'SHA-256'; content = $hash })
-            }
+    foreach ($file in $binaryFiles) {
+        $relative = $file.FullName.Substring($nativePrefix.Length).Replace('\', '/')
+        $digest = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+        [ordered]@{
+            type = 'file'
+            name = $relative
+            'bom-ref' = "native/$relative"
+            hashes = @([ordered]@{ alg = 'SHA-256'; content = $digest })
         }
     }
 )
