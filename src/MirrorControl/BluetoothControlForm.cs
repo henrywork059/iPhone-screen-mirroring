@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace MirrorControl;
@@ -32,6 +31,8 @@ internal sealed class BluetoothControlForm : Form
     private bool _capturing;
     private int _keyboardSubscribers;
     private int _mouseSubscribers;
+    private int? _lePeerCount;
+    private int? _classicPeerCount;
 
     internal BluetoothControlForm()
     {
@@ -200,9 +201,14 @@ internal sealed class BluetoothControlForm : Form
         _keyboardSubscribers = 0;
         _mouseSubscribers = 0;
         _hosts.Items.Clear();
+        _lePeerCount = null;
+        _classicPeerCount = null;
+        // Bluetooth pairing alone does not guarantee HID report subscriptions.
+        // Query actual LE and Classic link state before listing HID subscribers.
+        _cli.TrySend("peers");
         _cli.TrySend("status");
         _cli.TrySend("host");
-        _status.Text = "Checking paired hosts. Choose your iPhone after it appears below.";
+        _status.Text = "Inspecting Bluetooth links and HID subscribers...";
         UpdateControls();
     }
 
@@ -286,34 +292,44 @@ internal sealed class BluetoothControlForm : Form
         {
             _status.Text = "Advertising. Pair with iPhone, enable AssistiveTouch, then Refresh paired hosts.";
         }
-        var keyboard = Regex.Match(line, @"^\s*keyboard subs\s*:\s*(\d+)", RegexOptions.IgnoreCase);
-        if (keyboard.Success) _keyboardSubscribers = int.Parse(keyboard.Groups[1].Value);
-        var mouse = Regex.Match(line, @"^\s*mouse subs\s*:\s*(\d+)", RegexOptions.IgnoreCase);
-        if (mouse.Success) _mouseSubscribers = int.Parse(mouse.Groups[1].Value);
+        if (BleHidCliOutput.TryReadPeerCount(line, "LE", out int leCount))
+            _lePeerCount = leCount;
+        if (BleHidCliOutput.TryReadPeerCount(line, "classic", out int classicCount))
+            _classicPeerCount = classicCount;
 
-        // BleHid 'host' outputs one numbered subscribed host per line.
-        var hostMatch = Regex.Match(line, @"^\s*\*?\s*(\d{1,2})\.\s+(.+)$");
-        if (hostMatch.Success && int.TryParse(hostMatch.Groups[1].Value, out int index)
-            && index is >= 1 and <= 32)
+        if (BleHidCliOutput.TryReadSubscribers(line, "keyboard", out int keyboardCount))
+            _keyboardSubscribers = keyboardCount;
+        if (BleHidCliOutput.TryReadSubscribers(line, "mouse", out int mouseCount))
+            _mouseSubscribers = mouseCount;
+
+        // A redirected BleHid CLI can prefix command responses with "> ".
+        // Parse only the normalized host records, not arbitrary console text.
+        if (BleHidCliOutput.TryReadHost(line, out int index, out string display))
         {
-            var display = hostMatch.Groups[2].Value.Trim();
-            // The CLI may append CAPS LOCK / NUM LOCK warnings after the
-            // bracketed Bluetooth address. Those aren't part of the host name.
-            int addressEnd = display.LastIndexOf(']');
-            if (addressEnd >= 0) display = display[..(addressEnd + 1)];
             if (!_hosts.Items.Cast<HostChoice>().Any(x => x.Number == index && x.Display == display))
                 _hosts.Items.Add(new HostChoice(index, display));
-            if (_hosts.SelectedIndex == -1 && _hosts.Items.Count > 0) _hosts.SelectedIndex = 0;
+            if (_hosts.SelectedIndex == -1 && _hosts.Items.Count > 0)
+                _hosts.SelectedIndex = 0;
+            _status.Text = "Subscribed HID device found. Select only your iPhone.";
         }
 
         if (_pendingHost is not null &&
-            string.Equals(line.Trim(), "sending to: " + _pendingHost, StringComparison.Ordinal))
+            BleHidCliOutput.SelectedHostConfirmed(line, _pendingHost))
         {
             _targetReady = true;
             _status.Text = _keyboardSubscribers > 0 && _mouseSubscribers > 0
                 ? "iPhone target selected. Test pointer buttons or start capture."
                 : "Host selected, but keyboard/mouse subscriptions are not both active. Refresh hosts.";
             _pendingHost = null;
+        }
+
+        if (BleHidCliOutput.NoSubscribedHosts(line))
+        {
+            _status.Text = _lePeerCount.GetValueOrDefault() > 0
+                ? "BLE link exists, but no HID subscriptions. Forget and re-pair the PC on iPhone if this persists."
+                : _classicPeerCount.GetValueOrDefault() > 0
+                    ? "A Classic Bluetooth link is present, but no LE HID subscriber. Re-pair after starting Bluetooth HID."
+                    : "No connected BLE HID host. iPhone's Bluetooth pairing alone does not mean HID is connected.";
         }
         if (line.Contains("capturing - Ctrl+Alt+Q stops.", StringComparison.OrdinalIgnoreCase))
         {
