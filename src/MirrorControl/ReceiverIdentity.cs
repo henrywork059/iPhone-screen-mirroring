@@ -32,8 +32,64 @@ internal static class ReceiverIdentity
         string patch = Path.Combine(AppContext.BaseDirectory, "native", "source-notices", "applied-source-diff.patch");
         if (!File.Exists(patch))
             throw new InvalidOperationException("Required corresponding-source patch is missing from the test bundle.");
+        ValidateNativeManifest();
 #else
         throw new InvalidOperationException(BackendSecurityGate.Reason);
 #endif
     }
+
+#if EXPERIMENTAL_RECEIVER
+    // Bind ALL packaged executable native code (not merely uxplay.exe) to the
+    // exact build. Every DLL and helper EXE must be listed, unchanged and
+    // inside the expected private native directory before opening the listener.
+    private static void ValidateNativeManifest()
+    {
+        string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "native"));
+        string rootPrefix = Path.TrimEndingDirectorySeparator(root) + Path.DirectorySeparatorChar;
+        string manifest = Path.Combine(root, "BUNDLE-MANIFEST.tsv");
+        if (!File.Exists(manifest))
+            throw new FileNotFoundException("Bundled native code manifest is missing.", manifest);
+        using (var stream = File.OpenRead(manifest))
+        {
+            string digest = Convert.ToHexString(SHA256.HashData(stream));
+            if (!string.Equals(digest, ExperimentalBuildIdentity.NativeManifestSha256,
+                    StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Native executable manifest checksum mismatch.");
+        }
+
+        var expected = new System.Collections.Generic.HashSet<string>(
+            StringComparer.OrdinalIgnoreCase);
+        foreach (string line in File.ReadLines(manifest))
+        {
+            string[] parts = line.Split('\t');
+            if (parts.Length != 2 || parts[0].Length != 64)
+                throw new InvalidOperationException("Malformed native code manifest record.");
+            string relative = parts[1].Replace('/', Path.DirectorySeparatorChar);
+            if (Path.IsPathRooted(relative) || relative.Split(Path.DirectorySeparatorChar)
+                    .Any(part => part is "." or ".." or ""))
+                throw new InvalidOperationException("Unsafe native code manifest path.");
+            string full = Path.GetFullPath(Path.Combine(root, relative));
+            if (!full.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase) ||
+                !expected.Add(full) || !File.Exists(full) ||
+                !string.Equals(Path.GetExtension(full), ".dll", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(Path.GetExtension(full), ".exe", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Missing, duplicate or invalid native binary.");
+            using var input = File.OpenRead(full);
+            string actual = Convert.ToHexString(SHA256.HashData(input));
+            if (!string.Equals(actual, parts[0], StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("A native executable or DLL was modified: " + relative);
+        }
+
+        if (!expected.Contains(Path.GetFullPath(BundledPath)))
+            throw new InvalidOperationException("Receiver is absent from the signed-to-build native inventory.");
+        foreach (string file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+        {
+            string extension = Path.GetExtension(file);
+            if ((extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
+                 extension.Equals(".exe", StringComparison.OrdinalIgnoreCase)) &&
+                !expected.Contains(Path.GetFullPath(file)))
+                throw new InvalidOperationException("Unlisted native executable is present: " + Path.GetFileName(file));
+        }
+    }
+#endif
 }
