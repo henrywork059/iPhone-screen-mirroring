@@ -102,7 +102,7 @@ public sealed class MirrorForm : Form
         {
             Dock = DockStyle.Fill,
             ForeColor = SecondaryColor,
-            Text = "Pairing PIN appears above. No output is intentionally written to disk by this controller. " +
+            Text = "Read each connection PIN in the UxPlay console window. The controller writes no logs to disk. " +
                    "Allow Windows Firewall access on Private networks only."
         }, 0, 9);
     }
@@ -161,7 +161,7 @@ public sealed class MirrorForm : Form
             });
             _receiver.Start(executable, name);
             _stop.Enabled = true;
-            SetStatus("Receiver started. Select '" + name + "' on your iPhone.");
+            SetStatus("Receiver running. Read PIN in console; select '" + name + "' on iPhone.");
         }
         catch (Exception ex)
         {
