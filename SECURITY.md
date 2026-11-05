@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-**No version is currently approved for installation or use.** This project is a source-only prototype. The Windows AirPlay receiver is deliberately blocked while we evaluate known memory-safety issues in the UxPlay backend.
+**No version is currently approved for installation or use.** This is an unapproved mirroring-only prototype. Normal receiver launch stays disabled; security CI builds unpublished experimental candidates. Signed distribution and independent review remain pending.
 
 See [the security review](docs/SECURITY_REVIEW.md) and [security issue #2](https://github.com/henrywork059/iPhone-screen-mirroring/issues/2).
 
@@ -21,3 +21,9 @@ If the repository's **Private vulnerability reporting** option is enabled, use i
 - Review the application's firewall exposure, cryptographic dependencies, codec parser behavior, and license obligations before any release.
 
 A successful CI job verifies only the checks listed in that job. It is **not** a security certification.
+
+## Security hardening (November 2026)
+
+[Current source hardening, test evidence and outstanding release gates](docs/SECURITY_HARDENING_STATUS.md).
+
+No new unsigned executable artifacts are uploaded. Do not disable Smart App Control or bypass Windows Security warnings to run previous test ZIPs.
