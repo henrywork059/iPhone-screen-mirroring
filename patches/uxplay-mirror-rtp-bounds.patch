@@ -1,7 +1,15 @@
 diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
 --- a/lib/raop_rtp_mirror.c
 +++ b/lib/raop_rtp_mirror.c
-@@ -30,6 +30,7 @@
+@@ -23,6 +23,7 @@
+ #include <assert.h>
+ #include <errno.h>
+ #include <stdbool.h>
++#include <math.h>
+ 
+ #include "raop.h"
+ #include "netutils.h"
+@@ -30,6 +31,7 @@
  #include "logger.h"
  #include "byteutils.h"
  #include "mirror_buffer.h"
@@ -9,7 +17,7 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
  #include "stream.h"
  #include "utils.h"
  #include "plist/plist.h"
-@@ -318,6 +319,12 @@
+@@ -318,6 +320,12 @@
  
              /*packet[0:3] contains the payload size */
              int payload_size = byteutils_get_int(packet, 0);
@@ -22,7 +30,7 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
              char packet_description[13] = {0};
              char *p = packet_description;
              int n = sizeof(packet_description);
-@@ -362,10 +369,11 @@
+@@ -362,10 +370,11 @@
              /* "streaming report" packets have no timestamp in packet[8:15] */
  
              if (payload == NULL) {
@@ -36,7 +44,7 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
                  }
  		
                  readstart = 0;
-@@ -392,6 +400,11 @@
+@@ -392,6 +401,11 @@
  
              switch (packet[4]) {
              case  0x00:
@@ -48,7 +56,7 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
                  // Normal video data (VCL NAL)
  
                  // Conveniently, the video data is already stamped with the remote wall clock time,
-@@ -436,7 +449,8 @@
+@@ -436,7 +450,8 @@
                  payload_out = (unsigned char*) malloc(payload_size + sps_pps_len);
                  if (!payload_out) {
                      logger_log(raop_rtp_mirror->logger, LOGGER_ERR,"raop_rtp_mirror: Memory allocation failed (payload_out)");
@@ -58,7 +66,7 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
                  }
                  if (sps_pps_len) {
                      memcpy(payload_out, sps_pps, sps_pps_len);
-@@ -451,11 +465,14 @@
+@@ -451,11 +466,14 @@
                  int nalu_size = 0;
                  int nalus_count = 0;
                  while (nalu_size < payload_size) {
@@ -77,7 +85,28 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
                          valid_data = false;
                          break;
                      }
-@@ -611,6 +628,13 @@
+@@ -595,6 +613,20 @@
+                 float y_offset = byteutils_get_float(packet, 52);
+                 float width = byteutils_get_float(packet, 56);
+                 float height = byteutils_get_float(packet, 60);
++                /* Reject malformed dimensions before unsigned-short casts. */
++                if (!isfinite(width_source) || !isfinite(height_source) ||
++                    !isfinite(x_offset) || !isfinite(y_offset) ||
++                    !isfinite(width) || !isfinite(height) ||
++                    width_source <= 0 || height_source <= 0 ||
++                    width <= 0 || height <= 0 ||
++                    width_source > 8192 || height_source > 8192 ||
++                    width > 8192 || height > 8192 ||
++                    x_offset < 0 || y_offset < 0 ||
++                    x_offset > 8192 || y_offset > 8192) {
++                    logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
++                               "Dropping malformed mirror video dimensions");
++                    break;
++                }
+ 
+                 if (width != width_0 || height != height_0) {
+                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: Unexpected : data  %f,"
+@@ -611,6 +643,13 @@
                      unsupported_codec = true;
                      break;
                  }
@@ -91,7 +120,7 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
                  /* test for a H265 VPS/SPS/PPS */
                  unsigned char hvc1[] = { 0x68, 0x76, 0x63, 0x31 };
  
-@@ -634,59 +658,30 @@
+@@ -634,59 +673,30 @@
                          conn_reset = true;
                          break;
                      }
@@ -170,7 +199,7 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
                      ptr = sps_pps;
                      memcpy(ptr, nal_start_code, 4);
                      ptr += 4;
-@@ -723,9 +718,26 @@
+@@ -723,9 +733,26 @@
                          conn_reset = true;
                          break;
                      }
@@ -198,3 +227,33 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
                      unsigned char *picture_parameter_set = payload + sps_size + 11;
                      int data_size = 6;
                      if (logger_debug) {
+@@ -757,6 +784,7 @@
+                     if (sps_pps_len > sizeof(sps_pps)) {
+                         logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "\nInvalid SPS+PPS length %zu exceeds limit %zu, aborting",
+                                    sps_pps_len, sizeof(sps_pps));
++                        sps_pps_len = 0;
+                         break;
+                     }
+                     unsigned char *ptr = sps_pps;
+@@ -819,10 +847,17 @@
+                             uint32_t plist_len = 0;
+                             plist_t root_node = NULL;
+                             plist_from_bin((char *) payload, plist_size, &root_node);
+-                            plist_to_xml(root_node, &plist_xml, &plist_len);
+-                            logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "%s", plist_xml);
+-                            free(plist_xml);
+-                            plist_free(root_node);
++                            if (root_node) {
++                                plist_to_xml(root_node, &plist_xml, &plist_len);
++                                if (plist_xml) {
++                                    logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "%s", plist_xml);
++                                    free(plist_xml);
++                                }
++                                plist_free(root_node);
++                            } else {
++                                logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
++                                           "Dropping invalid mirror performance plist");
++                            }
+                         }
+                     }
+                 }
