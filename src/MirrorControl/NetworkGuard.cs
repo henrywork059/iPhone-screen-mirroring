@@ -19,6 +19,18 @@ internal static class NetworkGuard
         const string script = """
             $ErrorActionPreference = 'Stop'
             $ids = @(Get-NetAdapter -Physical | Where-Object { $_.Status -eq 'Up' } | ForEach-Object { $_.ifIndex })
+            # A Private network profile does not mean the firewall is enabled.
+            # Fail closed if Windows Defender Firewall is disabled or inbound
+            # traffic is allowed by default on either local network profile.
+            $firewall = @(Get-NetFirewallProfile -Profile Private,Public -ErrorAction Stop)
+            if ($firewall.Count -ne 2 -or
+                @($firewall | Where-Object {
+                    $_.Enabled -ne $true -or
+                    $_.DefaultInboundAction -ne 'Block'
+                }).Count -gt 0) {
+                'BLOCK:Windows Firewall must be enabled and block inbound by default on Private and Public profiles.'
+                exit 0
+            }
             $profiles = @(Get-NetConnectionProfile)
             if ($profiles.Count -eq 0 -or @($profiles | Where-Object { $ids -contains $_.InterfaceIndex }).Count -eq 0) {
                 'BLOCK:No connected physical network profile was detected.'
