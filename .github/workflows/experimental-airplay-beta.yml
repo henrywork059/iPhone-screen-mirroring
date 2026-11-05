@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'src/MirrorControl/**'
+      - 'third_party/blehid/**'
       - 'scripts/ci/build-full-receiver-windows.sh'
       - 'scripts/ci/stage-native-runtime.sh'
       - 'patches/uxplay-experimental-mirror-short-frame.patch'
@@ -93,6 +94,26 @@ jobs:
             throw 'Unneeded serial port dependency found.'
           }
           Write-Host 'Hardware input bridge excluded; resolution selection retained.'
+      - name: Stage pinned Windows BLE HID CLI v0.6.0 (MIT; explicit opt-in)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url = 'https://github.com/abhishek-raj/windows-ble-hid/releases/download/v0.6.0/BleHid-Cli-v0.6.0-win-x64.zip'
+          $archive = Join-Path $PWD '_beta/BleHid-Cli-v0.6.0-win-x64.zip'
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          $expected = '0BBB2E85BEBC783E304E3E46769F3000897F18B72FA646B253B3B0FF292F87B7'
+          $actual = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
+          if ($actual -ne $expected) { throw 'Upstream BLE HID v0.6.0 release digest mismatch.' }
+          Expand-Archive -LiteralPath $archive -DestinationPath _beta/blehid-unpack -Force
+          $cli = Get-ChildItem _beta/blehid-unpack -Filter BleHid.Cli.exe -File -Recurse |
+            Select-Object -First 1
+          if ($null -eq $cli) { throw 'Verified BLE HID release contains no CLI executable.' }
+          New-Item -ItemType Directory -Path _beta/blehid-stage -Force | Out-Null
+          Copy-Item -LiteralPath $cli.FullName -Destination _beta/blehid-stage/BleHid.Cli.exe
+          Copy-Item -LiteralPath third_party/blehid/LICENSE -Destination _beta/blehid-stage/LICENSE-MIT.txt
+          $sha = (Get-FileHash -LiteralPath _beta/blehid-stage/BleHid.Cli.exe -Algorithm SHA256).Hash
+          "BLEHID_EXE_SHA256=$sha" >> $env:GITHUB_ENV
+          Write-Host "Verified BLE HID archive; pinned CLI executable SHA256: $sha"
       - name: Build only the explicit experimental controller variant
         shell: pwsh
         run: |
@@ -111,12 +132,14 @@ jobs:
           internal static class ExperimentalBuildIdentity
           {
               internal const string UxPlaySha256 = "$sha";
+              internal const string BleHidSha256 = "$env:BLEHID_EXE_SHA256";
           }
           "@
           $code | Set-Content src/MirrorControl/ExperimentalBuildIdentity.g.cs -Encoding utf8
           dotnet publish src/MirrorControl/MirrorControl.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=false -p:EnableExperimentalReceiver=true --output _beta/desktop
           if ($LASTEXITCODE -ne 0) { throw 'Experimental GUI publish failed' }
           Copy-Item _beta/native _beta/desktop/native -Recurse
+          Copy-Item _beta/blehid-stage _beta/desktop/bluetooth -Recurse
           foreach ($path in @(
             '_beta/desktop/MirrorControl.exe',
             '_beta/desktop/config/uxplayrc',
@@ -124,9 +147,13 @@ jobs:
             '_beta/desktop/native/source-notices/uxplay-patched-corresponding-source.tar.gz',
             '_beta/desktop/native/source-notices/UXPLAY-GPL-3.0-LICENSE',
             '_beta/desktop/native/source-notices/MSYS2-installed-package-inventory.txt',
-            '_beta/desktop/native/lib/gstreamer-1.0')) {
+            '_beta/desktop/native/lib/gstreamer-1.0',
+            '_beta/desktop/bluetooth/BleHid.Cli.exe',
+            '_beta/desktop/bluetooth/LICENSE-MIT.txt')) {
             if (-not (Test-Path $path)) { throw "Missing test bundle component: $path" }
           }
+          $bleCopiedSha = (Get-FileHash _beta/desktop/bluetooth/BleHid.Cli.exe -Algorithm SHA256).Hash
+          if ($bleCopiedSha -ne $env:BLEHID_EXE_SHA256) { throw 'The pinned BLE HID executable changed after checksum binding.' }
           $copiedSha = (Get-FileHash _beta/desktop/native/bin/uxplay.exe -Algorithm SHA256).Hash
           if ($copiedSha -ne $sha) { throw 'The packaged native binary changed after binding its checksum.' }
           @(
@@ -138,6 +165,13 @@ jobs:
             'On iPhone open Control Center > Screen Mirroring > iPhone Mirror.',
             'The pairing PIN is printed in a separate UxPlay console window.',
             'The video appears in a separate GStreamer-rendered window, not inside this controller.',
+            'OPTIONAL: Bluetooth control requires a BLE-peripheral capable Windows adapter (already detected on the target laptop).',
+            'Exit any existing BleHid.Cli.exe before opening Bluetooth control in the controller.',
+            'Click Bluetooth control > Start Bluetooth. Pair your own iPhone and enable AssistiveTouch.',
+            'Click Refresh paired hosts, select ONLY your iPhone, then use keyboard/mouse buttons or capture.',
+            'CAUTION: During capture press Ctrl+Alt+Q to return keyboard and mouse to Windows.',
+            'Bluetooth input is relative; it is NOT automatically calibrated to the separate video window.',
+            'The optional Bluetooth executable is BleHid v0.6.0 (MIT), verified by official ZIP SHA-256 and embedded executable SHA-256.',
             'If the iPhone cannot see the receiver, inspect Windows Firewall PRIVATE profile only.',
             'Do not grant PUBLIC inbound access. Stop the receiver when finished.',
             'The exact patched UxPlay corresponding source and notices are under native/source-notices.',
