@@ -14,34 +14,32 @@ It **does not contain UxPlay**, cannot mirror an iPhone, and will **not open an 
 
 ## Actual iPhone mirroring: controlled test build
 
-**Use [the experimental AirPlay test guide](docs/EXPERIMENTAL_AIRPLAY_TEST.md), not the old stable installation instructions.** Download the explicitly named `iPhoneMirror-Experimental-AirPlay-TEST` artifact from the [beta workflow](https://github.com/henrywork059/iPhone-screen-mirroring/actions/workflows/experimental-airplay-beta.yml), extract both ZIP layers, then run `MirrorControl.exe` as a standard user on an isolated trusted Private network. Confirm the experiment warning and choose the receiver on your iPhone under Control Center → Screen Mirroring. The PIN appears in UxPlay's separate console, and video appears in UxPlay/GStreamer's separate window.
+**Use [the experimental AirPlay test guide](docs/EXPERIMENTAL_AIRPLAY_TEST.md), not the old stable installation instructions.** Download the explicitly named `iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY` artifact from the [beta workflow](https://github.com/henrywork059/iPhone-screen-mirroring/actions/workflows/experimental-airplay-beta.yml), extract both ZIP layers, then run `MirrorControl.exe` as a standard user on an isolated trusted Private network. Confirm the experiment warning and choose the receiver on your iPhone under Control Center → Screen Mirroring. The PIN appears in UxPlay's separate console, and video appears in UxPlay/GStreamer's separate window.
 
-This **can open listening network ports**. No full security audit, real iPhone acceptance test or signed installer exists. **Do not bypass SmartScreen or antivirus warnings.** The default controller remains locked.
+This **can open listening network ports**. No full security audit, real iPhone acceptance test or signed installer exists. **Do not bypass Smart App Control, SmartScreen or antivirus warnings.** The default controller remains locked.
 
 ## Higher-quality mirroring profiles (November 2026)
 
 - Select **1080p/30, 1080p/60, 1440p/60 (default), or 4K/30** in the controller before starting a mirror session. HEVC and real-device support are experimental; the iPhone can negotiate a lower resolution or frame rate.
 
-## Experimental Windows Bluetooth HID control (no ESP32)
+## Smart App Control and mirroring-only builds
 
-The mirroring beta includes a separately opt-in **Bluetooth control** window using
-the official **BleHid v0.6.0** CLI. The tested Windows adapter supports the required
-Bluetooth LE peripheral role. The new window can pair to your iPhone, list subscribed
-hosts, explicitly select your iPhone, send limited mouse/keyboard commands, and
-offer full keyboard/mouse capture. While captured, press **Ctrl+Alt+Q** to restore
-local Windows input.
+**Windows Smart App Control stays ON.** Microsoft does not provide per-app
+exceptions. Our experimental Windows package is **unsigned** because there
+is no trusted code-signing identity configured for this project.
+An unsigned mirroring-only app may still be blocked by Smart App Control.
+**Removing Bluetooth does not make the receiver or controller trusted.**
+Do not disable Smart App Control, bypass Windows Security warnings, or add
+an antivirus exclusion.
 
-This approach does **not** need an ESP32, new hardware, a Mac or iPhone
-Developer Mode. It uses the iPhone's normal Bluetooth keyboard and AssistiveTouch
-mouse support. **It does not map absolute clicks to AirPlay video pixels**:
-the image remains in a separate window and Bluetooth HID pointer movement is
-relative. iPhone pairing and actual input are still unverified on this specific
-phone. The default/stable app is still blocked, and the Bluetooth controller
-only runs in the explicit experimental build.
+A compatible future build requires a reviewed application and a valid
+trusted code-signing certificate for its executable components.
+See Microsoft's [Smart App Control signing guidance](https://learn.microsoft.com/en-us/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control).
 
-See [Windows Bluetooth control setup](docs/BLUETOOTH_HID_CONTROL.md). The
-third-party MIT license is included in the test ZIP, and the CI build pins its
-official release download and executable with SHA-256.
+**Mirroring-only:** Bluetooth HID, ESP32, keyboard/mouse capture, remote
+control and touchscreen input have all been removed. The app retains AirPlay
+video/audio mirroring, quality presets, consent prompts and the default
+security hold.
 
 ## Current validation results (2026-11-05)
 
@@ -88,7 +86,7 @@ If the UxPlay executable is in another location, change the GUI's path field or 
 - There is **no independent security audit** and **no Windows/iPhone validation** yet. Review the original UxPlay code and dependencies before trusting sensitive screen content.
 - Network category is user-configurable; use a trusted LAN, and verify firewall rules manually. Existing broad firewall exceptions are not removed.
 - Start/stop from the GUI currently terminates UxPlay immediately; graceful shutdown remains a TODO.
-- Experimental Bluetooth HID mouse/keyboard input is available only in the opt-in test build, after pairing and explicit host selection; it is not yet validated on the user's iPhone. Direct absolute touchscreen mapping, multitouch, and DRM-protected video are unsupported.
+- No Bluetooth HID, external hardware input, remote control, direct touch, multitouch or DRM-protected video is supported.
 
 ## Project documentation
 
