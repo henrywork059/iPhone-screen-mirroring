@@ -7,6 +7,7 @@ on:
       - scripts/ci/stage-native-runtime.sh
       - scripts/ci/build-full-receiver-windows.sh
       - src/MirrorControl/**
+      - scripts/ci/Test-NoNetworkRuntimeLoad.ps1
       - .github/workflows/pretest-bundle.yml
   workflow_dispatch:
 
@@ -46,6 +47,12 @@ jobs:
         run: |
           RECEIVER_STAGING_DIR="$(pwd)/_review_stage/native" bash scripts/ci/build-full-receiver-windows.sh
           bash scripts/ci/stage-native-runtime.sh "$(pwd)/_review_stage/native"
+      - name: Verify relocated receiver DLL loader with help-only invocation
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          powershell -NoProfile -File scripts/ci/Test-NoNetworkRuntimeLoad.ps1 -Executable _review_stage/native/bin/uxplay.exe -PluginDirectory _review_stage/native/lib/gstreamer-1.0
+          if ($LASTEXITCODE -ne 0) { throw 'Native loader smoke check failed.' }
       - name: Publish local controller and inspect combined ZIP without uploading
         shell: pwsh
         run: |
