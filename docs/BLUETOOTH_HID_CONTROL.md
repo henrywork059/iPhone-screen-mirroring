@@ -6,17 +6,17 @@ role, not AirPlay, to send normal external keyboard/mouse input to the iPhone.
 
 **Hardware requirements:** Windows 11 Bluetooth LE adapter with the peripheral
 role enabled, and an iPhone that accepts BLE HID keyboard/mouse devices. The
-target laptop's diagnostic already reported \`LE=True, Peripheral=True\`,
-successful HID GATT service initialization, and advertising \`Started\`.
+target laptop's diagnostic already reported `LE=True, Peripheral=True`,
+successful HID GATT service initialization, and advertising `Started`.
 **Actual iPhone pairing and pointer movement have not yet been confirmed.**
 
 ## Verified Windows test package (build + upload)
 
 The experimental Windows build has passed:
 [GitHub Actions #42066227443](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/42066227443).
-Under **Artifacts**, download \`iPhoneMirror-Experimental-AirPlay-TEST\`
+Under **Artifacts**, download `iPhoneMirror-Experimental-AirPlay-TEST`
 and extract its inner ZIP. The inner ZIP is **204,998,910 bytes**,
-SHA-256 \`B39F7A198243951D45145CD4AEBDE82383FCC394FF520D4D260802590F775414\`.
+SHA-256 `B39F7A198243951D45145CD4AEBDE82383FCC394FF520D4D260802590F775414`.
 The artifact is retained until **November 12, 2026**.
 
 This confirms native and managed CI builds, archive checksums, and packaging,
@@ -24,14 +24,14 @@ not successful pairing with a physical iPhone.
 
 ## Pairing and first test
 
-1. Exit the earlier standalone **BleHid.Cli.exe** at its \`>\` prompt with
-   \`quit\` (also fully quit its desktop/tray app, if installed). Only one
+1. Exit the earlier standalone **BleHid.Cli.exe** at its `>` prompt with
+   `quit` (also fully quit its desktop/tray app, if installed). Only one
    Bluetooth HID provider should run on the PC.
 2. Extract both ZIP layers from the updated **experimental mirroring build**
-   and run \`MirrorControl.exe\` as a standard Windows user.
+   and run `MirrorControl.exe` as a standard Windows user.
 3. Click **Bluetooth control**. Click **Start Bluetooth** and confirm the
    experimental pairing prompt. The companion uses encrypted HID GATT reports;
-   there is no \`--plain\` option and no background autostart.
+   there is no `--plain` option and no background autostart.
 4. On iPhone open **Settings → Bluetooth**, find the Windows PC's advertised
    HID device and pair with it. Also enable **Settings → Accessibility →
    Touch → AssistiveTouch** to show a mouse pointer.
@@ -73,8 +73,8 @@ a signed iOS app, USB developer pairing, or Developer Mode.
 
 ## Proven and unproven
 
-- **Proven on the target PC:** Adapter reports \`LE=True\`,
-  \`Peripheral=True\`, and the GATT HID keyboard/mouse services and BLE
+- **Proven on the target PC:** Adapter reports `LE=True`,
+  `Peripheral=True`, and the GATT HID keyboard/mouse services and BLE
   advertisements successfully started.
 - **Documented by upstream BleHid:** Paired iPhone keyboard and mouse input
   works with AssistiveTouch, but iPhone reconnect-after-restart behavior is
@@ -91,13 +91,13 @@ a signed iOS app, USB developer pairing, or Developer Mode.
 BleHid is MIT licensed by Abhishek Raj. The beta bundles the upstream
 v0.6.0 **win-x64 CLI**, checked against the GitHub release asset SHA-256:
 
-\`0BBB2E85BEBC783E304E3E46769F3000897F18B72FA646B253B3B0FF292F87B7\`
+`0BBB2E85BEBC783E304E3E46769F3000897F18B72FA646B253B3B0FF292F87B7`
 
 - Source: https://github.com/abhishek-raj/windows-ble-hid
 - Release: https://github.com/abhishek-raj/windows-ble-hid/releases/tag/v0.6.0
-- Bundled license: \`bluetooth/LICENSE-MIT.txt\`
+- Bundled license: `bluetooth/LICENSE-MIT.txt`
 
-At CI publish time, the exact \`bluetooth/BleHid.Cli.exe\` SHA-256 is embedded
+At CI publish time, the exact `bluetooth/BleHid.Cli.exe` SHA-256 is embedded
 in the experimental GUI. The GUI refuses to launch a changed executable.
 Normal/default builds remain blocked and do not bundle or launch the HID CLI.
 
