@@ -37,7 +37,20 @@ The embedded SHA-256 of the bundled native UxPlay executable is `23F2393729DC291
 
 The Windows controller now offers **Compatible 1080p/30**, **Smooth 1080p/60**, **Sharper 1440p/60** (default), and **Ultra 4K/30**. The last two request UxPlay HEVC support (`-h265`) and require matching GStreamer H.265 parser/decoder plugins, which CI checks. A requested resolution/frame rate is advisory; some iPhones transmit less than requested. If a high-quality option fails, select a **1080p** profile and reconnect.
 
-Mouse/keyboard control is not currently implemented. The previously added external hardware prototype has been removed; the Windows mirroring application remains display-only.
+An optional **Windows Bluetooth HID v0.6.0** companion is now bundled in the
+explicit experimental ZIP. Click **Bluetooth control** to pair to your own
+iPhone, choose the correct subscribed host, and send keyboard/mouse input.
+This operates through the built-in Windows Bluetooth LE peripheral capability
+and iPhone AssistiveTouch; it requires no ESP32 or iPhone Developer Mode.
+The CLI download and exact packaged binary are both SHA-256 pinned, and its MIT
+license is included. It is **never** started automatically. The separate
+GStreamer video window still does not provide pixel-perfect direct touch
+mapping; a capture mode with **Ctrl+Alt+Q** emergency release redirects
+ordinary mouse/keyboard input to the paired iPhone.
+
+See [Bluetooth control setup and risks](BLUETOOTH_HID_CONTROL.md).
+The user's Windows adapter has passed BLE peripheral-role diagnostics; real
+iPhone pairing and device input remain unverified.
 
 ## Limitations and risk
 
