@@ -1,0 +1,43 @@
+# Build outputs (root and nested projects)
+build/
+out/
+bin/
+obj/
+dist/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+
+# Visual Studio and editors
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+
+# Compiled artifacts
+*.exe
+*.dll
+*.pdb
+*.ilk
+*.obj
+*.lib
+
+# Secrets, logs, crash dumps, and user-specific files
+*.log
+*.dmp
+.env
+.env.*
+!.env.example
+*.key
+*.p12
+*.pfx
+*.pem
+*.crt
+
+# OS files
+Thumbs.db
+.DS_Store
