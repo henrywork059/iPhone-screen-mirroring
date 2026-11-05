@@ -27,7 +27,7 @@ internal static class NetworkGuard
             } else {
                 'ALLOW:Private network profiles detected (not a guarantee of trusted network isolation).'
             }
-                        """;
+            """;
 
         string executable = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.System),
