@@ -62,7 +62,9 @@ public sealed class MirrorForm : Form
             ForeColor = SecondaryColor, AutoSize = false, Dock = DockStyle.Fill
         }, 0, 1);
         root.Controls.Add(MakeLabel("Path to uxplay.exe"), 0, 2);
-        _executable.Text = @"C:\msys64\ucrt64\bin\uxplay.exe";
+        string bundledReceiver = Path.Combine(AppContext.BaseDirectory, "native", "bin", "uxplay.exe");
+        _executable.Text = File.Exists(bundledReceiver) ? bundledReceiver :
+            @"C:\msys64\ucrt64\bin\uxplay.exe";
         StyleTextBox(_executable);
         root.Controls.Add(_executable, 0, 3);
 

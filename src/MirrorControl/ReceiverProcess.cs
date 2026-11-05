@@ -22,6 +22,8 @@ internal sealed class ReceiverProcess : IDisposable
 
     internal void Start(string executable, string receiverName)
     {
+        if (BackendSecurityGate.IsBlocked)
+            throw new InvalidOperationException(BackendSecurityGate.Reason);
         if (IsRunning)
             throw new InvalidOperationException("The receiver is already running.");
         if (!File.Exists(executable) ||
@@ -55,11 +57,23 @@ internal sealed class ReceiverProcess : IDisposable
         })
             info.ArgumentList.Add(arg);
 
-        info.Environment["PATH"] = directory + Path.PathSeparator + (Environment.GetEnvironmentVariable("PATH") ?? "");
+        // Do not inherit arbitrary caller PATH entries for native DLL resolution.
+        string windowsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        info.Environment["PATH"] = string.Join(Path.PathSeparator, new[]
+        {
+            directory, Path.Combine(windowsDirectory, "System32"), windowsDirectory
+        });
         // MSYS2 UCRT64 GStreamer plugins are stored alongside the UxPlay runtime.
         string plugins = Path.GetFullPath(Path.Combine(directory, "..", "lib", "gstreamer-1.0"));
         if (Directory.Exists(plugins))
+        {
             info.Environment["GST_PLUGIN_PATH_1_0"] = plugins;
+            info.Environment["GST_PLUGIN_SYSTEM_PATH_1_0"] = string.Empty;
+        }
+        string scanner = Path.GetFullPath(Path.Combine(directory, "..", "libexec", "gstreamer-1.0",
+            "gst-plugin-scanner.exe"));
+        if (File.Exists(scanner))
+            info.Environment["GST_PLUGIN_SCANNER_1_0"] = scanner;
 
         var process = new Process { StartInfo = info, EnableRaisingEvents = true };
         process.Exited += (_, _) => Exited?.Invoke();

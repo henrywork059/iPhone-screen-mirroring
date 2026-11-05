@@ -43,6 +43,10 @@ jobs:
           if ($launcher -notmatch '(?m)^throw ''SECURITY HOLD:') {
             throw 'SECURITY HOLD regression: PowerShell receiver launcher was unblocked.'
           }
+          $processController = Get-Content src/MirrorControl/ReceiverProcess.cs -Raw
+          if ($processController -notmatch 'if \(BackendSecurityGate.IsBlocked\)') {
+            throw 'SECURITY HOLD regression: receiver process no longer checks the launch gate.'
+          }
           Write-Host 'Emergency security hold remains active. This is not an audit.'
       - name: Build Windows controller
         run: dotnet build src/MirrorControl/MirrorControl.csproj --configuration Release
