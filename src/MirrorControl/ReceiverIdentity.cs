@@ -46,7 +46,7 @@ internal static class ReceiverIdentity
     {
         string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "native"));
         string rootPrefix = Path.TrimEndingDirectorySeparator(root) + Path.DirectorySeparatorChar;
-        string manifest = Path.Combine(root, "BUNDLE-MANIFEST.tsv");
+        string manifest = Path.Combine(root, "SHA256SUMS.txt");
         if (!File.Exists(manifest))
             throw new FileNotFoundException("Bundled native code manifest is missing.", manifest);
         using (var stream = File.OpenRead(manifest))
@@ -61,19 +61,21 @@ internal static class ReceiverIdentity
             StringComparer.OrdinalIgnoreCase);
         foreach (string line in File.ReadLines(manifest))
         {
-            string[] parts = line.Split('\t');
+            string[] parts = line.Split(new[] { "  " }, 2, StringSplitOptions.None);
             if (parts.Length != 2 || parts[0].Length != 64)
                 throw new InvalidOperationException("Malformed native code manifest record.");
             string relative = parts[1].Replace('/', Path.DirectorySeparatorChar);
+            if (relative.StartsWith("." + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+                relative = relative[2..];
             if (Path.IsPathRooted(relative) || relative.Split(Path.DirectorySeparatorChar)
                     .Any(part => part is "." or ".." or ""))
                 throw new InvalidOperationException("Unsafe native code manifest path.");
             string full = Path.GetFullPath(Path.Combine(root, relative));
             if (!full.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase) ||
-                !expected.Add(full) || !File.Exists(full) ||
-                !string.Equals(Path.GetExtension(full), ".dll", StringComparison.OrdinalIgnoreCase)
-                && !string.Equals(Path.GetExtension(full), ".exe", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Missing, duplicate or invalid native binary.");
+                !File.Exists(full))
+                throw new InvalidOperationException("Missing or invalid native bundle file.");
+            if (!expected.Add(full))
+                throw new InvalidOperationException("Duplicate native code inventory path.");
             using var input = File.OpenRead(full);
             string actual = Convert.ToHexString(SHA256.HashData(input));
             if (!string.Equals(actual, parts[0], StringComparison.OrdinalIgnoreCase))
