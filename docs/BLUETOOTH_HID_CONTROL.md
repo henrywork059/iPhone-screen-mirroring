@@ -52,6 +52,29 @@ Capturing mouse/keyboard does not automatically map each mirrored pixel to an
 iPhone touch coordinate. If the pointer is displaced, move it on the iPhone,
 or use the arrow buttons to calibrate before capture.
 
+## Important fix: empty Refresh paired hosts list
+
+Older test builds incorrectly parsed the CLI's `> ` prompt and could hide
+subscribed iPhones from the dropdown. The corrected GUI strips that prompt,
+then reads keyboard/mouse subscriber counts and selected-host confirmation.
+
+**Refresh paired hosts** now also executes the upstream CLI `peers` command
+and shows connected LE/Classic peer counts. A Bluetooth connection showing
+"Connected" in iPhone Settings does not itself prove that the iPhone
+subscribed to the BLE HID report characteristics.
+
+If the list remains empty, inspect the GUI log for:
+- `connected LE (N)` — BLE connection count
+- `connected classic (N)` — ordinary Bluetooth connection count
+- `keyboard subs : N`, `mouse subs : N` — real HID report subscribers
+- `(no subscribed hosts)` — iPhone has not registered as a usable HID host
+
+A Classic connection without an LE HID subscriber, or an LE connection with
+zero report subscribers, may require forgetting the Windows Bluetooth device
+on the iPhone and pairing again while Bluetooth advertising is already
+running. Doing so removes the existing Bluetooth bond and may affect other
+services sharing that connection.
+
 ## If the iPhone is paired but there is no input
 
 Use **Refresh paired hosts** and inspect the log. The CLI must report both
