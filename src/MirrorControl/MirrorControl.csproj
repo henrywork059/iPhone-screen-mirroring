@@ -13,7 +13,6 @@
     <DefineConstants Condition="'$(EnableExperimentalReceiver)' == 'true'">$(DefineConstants);EXPERIMENTAL_RECEIVER</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.IO.Ports" Version="8.0.0" />
     <None Include="..\..\config\uxplayrc" Link="config\uxplayrc" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
