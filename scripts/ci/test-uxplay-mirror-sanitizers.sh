@@ -39,3 +39,30 @@ cc -std=c11 -g -O1 -fno-omit-frame-pointer -fsanitize=address,undefined \
 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
 UBSAN_OPTIONS=halt_on_error=1 \
   "$tmp/mirror_validation_regression"
+
+
+# Offline sanitizer/fuzzer coverage of the actual pinned UxPlay HTTP parser.
+git clone --quiet https://github.com/FDH2/UxPlay.git "$tmp/uxplay-http"
+git -C "$tmp/uxplay-http" checkout --quiet --detach 7aaad6222c2e136723e6e3d25c3be784260c577d
+[[ "$(git -C "$tmp/uxplay-http" rev-parse HEAD)" == 7aaad6222c2e136723e6e3d25c3be784260c577d ]] || exit 1
+git -C "$tmp/uxplay-http" apply --check "$root/patches/uxplay-http-request-bounds.patch"
+git -C "$tmp/uxplay-http" apply "$root/patches/uxplay-http-request-bounds.patch"
+common=(-std=c11 -O1 -g -D_GNU_SOURCE -fno-omit-frame-pointer -fsanitize=address,undefined -I "$tmp/uxplay-http/lib")
+sources=("$tmp/uxplay-http/lib/http_request.c" "$tmp/uxplay-http/lib/llhttp/api.c"
+         "$tmp/uxplay-http/lib/llhttp/http.c" "$tmp/uxplay-http/lib/llhttp/llhttp.c")
+clang -std=c11 -O1 -g -D_GNU_SOURCE -fno-omit-frame-pointer -fsanitize=address,undefined \
+  -I "$tmp/uxplay-http/lib" "$tmp/uxplay-http/lib/http_request.c" \
+  "$tmp/uxplay-http/lib/llhttp/api.c" "$tmp/uxplay-http/lib/llhttp/http.c" \
+  "$tmp/uxplay-http/lib/llhttp/llhttp.c" "$root/tests/native/uxplay_http_regression.c" \
+  -o "$tmp/http_regression"
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 "$tmp/http_regression"
+clang -std=c11 -O1 -g -D_GNU_SOURCE -fno-omit-frame-pointer -fsanitize=fuzzer,address,undefined \
+  -I "$tmp/uxplay-http/lib" "$tmp/uxplay-http/lib/http_request.c" \
+  "$tmp/uxplay-http/lib/llhttp/api.c" "$tmp/uxplay-http/lib/llhttp/http.c" \
+  "$tmp/uxplay-http/lib/llhttp/llhttp.c" "$root/tests/native/uxplay_http_fuzz.c" \
+  -o "$tmp/http_fuzzer"
+mkdir -p "$tmp/http_corpus"
+printf 'GET /info HTTP/1.1\r\nHost: local\r\n\r\n' > "$tmp/http_corpus/info"
+printf '\001PTTH/1.0 200 OK\r\nContent-Length: 3\r\n\r\nabc' > "$tmp/http_corpus/ptth"
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+  "$tmp/http_fuzzer" -runs=50000 -max_len=4096 -timeout=4 "$tmp/http_corpus"
