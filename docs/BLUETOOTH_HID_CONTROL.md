@@ -52,6 +52,23 @@ Capturing mouse/keyboard does not automatically map each mirrored pixel to an
 iPhone touch coordinate. If the pointer is displaced, move it on the iPhone,
 or use the arrow buttons to calibrate before capture.
 
+## Corrected build for paired-but-empty HID host list
+
+The parser correction has passed offline Windows tests, and the corrected
+experimental mirroring + Bluetooth package has also passed its full Windows
+build: [GitHub Actions run #42070566283](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/42070566283).
+Under **Artifacts**, download `iPhoneMirror-Experimental-AirPlay-TEST`
+and extract both ZIP layers. This artifact expires November 12, 2026.
+
+Verified inner ZIP SHA-256:
+`1B47A51EB7708096AC75CD35FD2C5271F22EB4916F171CC00249D746024E32D9`.
+
+The corrected **Refresh paired hosts** button now queries `peers`,
+`status`, and `host`, normalizes the CLI prompt, and reports
+Bluetooth LE/Classic connection differences and missing HID subscriptions.
+The package has been compiled and inspected, but its real iPhone pairing
+behavior still needs device testing.
+
 ## Important fix: empty Refresh paired hosts list
 
 Older test builds incorrectly parsed the CLI's `> ` prompt and could hide
