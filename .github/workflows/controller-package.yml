@@ -1,0 +1,40 @@
+name: Windows offline controller packaging (no receiver)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-package-only:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build self-contained offline Windows controller and inspect ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $gate = Get-Content src/MirrorControl/BackendSecurityGate.cs -Raw
+          if ($gate -notmatch 'internal static bool IsBlocked\s*=>\s*true\s*;') {
+            throw 'Unexpected unblocked app. Do not create an offline test package.'
+          }
+          dotnet publish src/MirrorControl/MirrorControl.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=false --output offline-controller
+          if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed' }
+          $exe = 'offline-controller/MirrorControl.exe'
+          $config = 'offline-controller/config/uxplayrc'
+          if (-not (Test-Path $exe -PathType Leaf)) { throw 'Missing compiled GUI' }
+          if (-not (Test-Path $config -PathType Leaf)) { throw 'Missing startup config' }
+          if (Test-Path 'offline-controller/uxplay.exe') { throw 'Receiver must not be bundled in offline package' }
+          Compress-Archive -Path offline-controller/* -DestinationPath offline-controller.zip -CompressionLevel Optimal
+          $hash = Get-FileHash offline-controller.zip -Algorithm SHA256
+          Write-Host ('Offline controller ZIP SHA256: ' + $hash.Hash)
+          Write-Host ('Offline controller ZIP bytes: ' + (Get-Item offline-controller.zip).Length)
+          Write-Host 'Built and checked. No binary or ZIP is published by this workflow.'
+      # The package is intentionally discarded when the ephemeral runner exits.
