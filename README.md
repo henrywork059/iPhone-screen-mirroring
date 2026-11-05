@@ -8,6 +8,8 @@ A local-first iPhone-to-Windows 11 AirPlay mirroring project.
 
 ## First prototype
 
+**Offline progress:** Proposed short-frame fix has passed Linux AddressSanitizer/UndefinedBehaviorSanitizer tests and Windows UCRT64 native regression tests, including real OpenSSL cryptography. This is *not* a full receiver audit; all AirPlay launch paths remain blocked. [Validation results](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/41960621529).
+
 - **Controller:** .NET 8 Windows Forms app under [`src/MirrorControl`](src/MirrorControl/).
 - **Receiver:** upstream [UxPlay](https://github.com/FDH2/UxPlay). Formerly pinned v1.73.7 is **not approved for execution** due to a subsequent heap-overflow report.
 - **Video/audio:** UxPlay + GStreamer opens a separate video window and uses local Windows audio. The controller does not yet embed video.

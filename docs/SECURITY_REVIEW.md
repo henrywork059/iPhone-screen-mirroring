@@ -40,9 +40,12 @@ As of November 5, 2026, our repository contains an **experimental, source-only f
 - **Passed:** short/empty/boundary video-frame regression against the real upstream C module with deterministic crypto test doubles, under ASan/UBSan.
 - **Passed:** same categories of regression against the real UxPlay OpenSSL AES-CTR/SHA-512 implementation, under ASan/UBSan.
 - **Passed:** Windows C# controller build and existing fail-closed launcher checks.
-- **Not performed:** Windows native UxPlay compilation, full network-protocol fuzzing, installer audit, dynamic firewall isolation, or real iPhone tests.
+- **Passed:** Windows UCRT64 compilation and execution of the patched upstream C regression both with deterministic crypto test doubles and with UxPlay's real OpenSSL AES-CTR/SHA-512 routines (without running any network receiver).
+- **Not performed:** full Windows UxPlay executable build, network-protocol fuzzing, installer audit, dynamic firewall isolation, or real iPhone tests.
 
 Upstream's current development fix differs from our candidate: its short-frame branch checks for partial input **inside** a loop still bounded by the original residual length. Our source review identifies a correctness risk for partial input and a possible out-of-bounds access for empty input. Upstream review and independent Windows validation remain necessary.
+
+Successful validation run: [Linux ASan/UBSan and Windows UCRT64 functional tests](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/41960621529).
 
 CI jobs: [offline memory-safety test](https://github.com/henrywork059/iPhone-screen-mirroring/actions/workflows/uxplay-memory-safety.yml) and [Windows source checks](https://github.com/henrywork059/iPhone-screen-mirroring/actions/workflows/windows-checks.yml).
 
