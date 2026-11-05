@@ -88,7 +88,7 @@ If the UxPlay executable is in another location, change the GUI's path field or 
 - There is **no independent security audit** and **no Windows/iPhone validation** yet. Review the original UxPlay code and dependencies before trusting sensitive screen content.
 - Network category is user-configurable; use a trusted LAN, and verify firewall rules manually. Existing broad firewall exceptions are not removed.
 - Start/stop from the GUI currently terminates UxPlay immediately; graceful shutdown remains a TODO.
-- iPhone remote control and DRM-protected video are not supported.
+- Experimental Bluetooth HID mouse/keyboard input is available only in the opt-in test build, after pairing and explicit host selection; it is not yet validated on the user's iPhone. Direct absolute touchscreen mapping, multitouch, and DRM-protected video are unsupported.
 
 ## Project documentation
 
