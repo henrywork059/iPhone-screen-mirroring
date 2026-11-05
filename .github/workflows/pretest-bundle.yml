@@ -51,7 +51,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          powershell -NoProfile -File scripts/ci/Test-NoNetworkRuntimeLoad.ps1 -Executable _review_stage/native/bin/uxplay.exe -PluginDirectory _review_stage/native/lib/gstreamer-1.0
+          pwsh -NoProfile -File scripts/ci/Test-NoNetworkRuntimeLoad.ps1 -Executable _review_stage/native/bin/uxplay.exe -PluginDirectory _review_stage/native/lib/gstreamer-1.0
           if ($LASTEXITCODE -ne 0) { throw 'Native loader smoke check failed.' }
       - name: Publish local controller and inspect combined ZIP without uploading
         shell: pwsh
