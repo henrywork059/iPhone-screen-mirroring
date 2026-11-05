@@ -103,6 +103,21 @@ public sealed class MirrorForm : Form
         _stop.Click += (_, _) => StopReceiver();
         actions.Controls.Add(_start);
         actions.Controls.Add(_stop);
+        var bluetooth = new Button
+        {
+            Text = "Bluetooth control",
+            BackColor = PanelColor,
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat,
+            Size = new Size(175, 42),
+            Enabled = BackendSecurityGate.IsExperimental
+        };
+        bluetooth.Click += (_, _) =>
+        {
+            using var dialog = new BluetoothControlForm();
+            dialog.ShowDialog(this);
+        };
+        actions.Controls.Add(bluetooth);
         root.Controls.Add(actions, 0, 8);
 
         _status.Text = BackendSecurityGate.IsBlocked
