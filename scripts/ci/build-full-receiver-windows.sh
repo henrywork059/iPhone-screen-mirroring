@@ -23,13 +23,27 @@ cp "$root/patches/uxplay_mirror_validation.h" "$tmp/uxplay/lib/uxplay_mirror_val
 sed 's/\r$//' "$root/patches/uxplay-mirror-rtp-bounds.patch" > "$tmp/rtp-bounds.patch"
 git -C "$tmp/uxplay" apply --check "$tmp/rtp-bounds.patch"
 git -C "$tmp/uxplay" apply "$tmp/rtp-bounds.patch"
+# Fail closed unless the upstream HTTP/reverse-HTTP parser matches our
+# reviewed source. The real HTTP implementation is fuzzed in separate CI.
+sed -i 's/\r$//' "$tmp/uxplay/lib/http_request.c"
+sed 's/\r$//' "$root/patches/uxplay-http-request-bounds.patch" > "$tmp/http-bounds.patch"
+git -C "$tmp/uxplay" apply --check "$tmp/http-bounds.patch"
+git -C "$tmp/uxplay" apply "$tmp/http-bounds.patch"
 # Track the new header in the matching source diff; it is also included in
 # the full corresponding-source archive.
 git -C "$tmp/uxplay" add -N lib/uxplay_mirror_validation.h
-echo 'Short-frame and RTP bounds patches applied. Running isolated C regressions (no network listener).'
+echo 'Short-frame, RTP and HTTP bounds patches applied. Running isolated C regressions (no network listener).'
 gcc -std=c11 -g -O2 -Wall -Wextra -Werror \
   "$root/tests/native/mirror_validation_regression.c" \
   -o "$tmp/mirror_validation_regression.exe"
+# Exercise the ACTUAL upstream HTTP and reverse-HTTP C parsers on Windows.
+gcc -std=c11 -g -O2 -Wall -Wextra -D_GNU_SOURCE -I "$tmp/uxplay/lib" \
+  "$tmp/uxplay/lib/http_request.c" \
+  "$tmp/uxplay/lib/llhttp/api.c" "$tmp/uxplay/lib/llhttp/http.c" \
+  "$tmp/uxplay/lib/llhttp/llhttp.c" \
+  "$root/tests/native/uxplay_http_regression.c" \
+  -o "$tmp/http_parser_regression.exe"
+"$tmp/http_parser_regression.exe"
 "$tmp/mirror_validation_regression.exe"
 gcc -std=c11 -g -O2 -DWIN32 -D_WIN32 -Wall -Wextra -I "$tmp/uxplay/lib" \
   "$root/tests/native/mirror_buffer_regression.c" -o "$tmp/test_stub.exe" -lws2_32
@@ -65,8 +79,9 @@ if [[ -n "${RECEIVER_STAGING_DIR:-}" ]]; then
   tar -C "$tmp/uxplay" --exclude=.git -czf "$RECEIVER_STAGING_DIR/source-notices/uxplay-patched-corresponding-source.tar.gz" .
   cp "$root/patches/uxplay-experimental-mirror-short-frame.patch" "$RECEIVER_STAGING_DIR/source-notices/candidate-short-frame.patch"
   cp "$root/patches/uxplay-mirror-rtp-bounds.patch" "$RECEIVER_STAGING_DIR/source-notices/rtp-bounds.patch"
+  cp "$root/patches/uxplay-http-request-bounds.patch" "$RECEIVER_STAGING_DIR/source-notices/http-bounds.patch"
   printf "%s\n" "$pinned" > "$RECEIVER_STAGING_DIR/source-notices/UPSTREAM-COMMIT"
-  git -C "$tmp/uxplay" diff -- lib/mirror_buffer.c lib/raop_rtp_mirror.c lib/uxplay_mirror_validation.h > "$RECEIVER_STAGING_DIR/source-notices/applied-source-diff.patch"
+  git -C "$tmp/uxplay" diff -- lib/mirror_buffer.c lib/raop_rtp_mirror.c lib/http_request.c lib/uxplay_mirror_validation.h > "$RECEIVER_STAGING_DIR/source-notices/applied-source-diff.patch"
   sha256sum "$exe" > "$RECEIVER_STAGING_DIR/source-notices/development-binary-sha256.txt"
   echo "Unpublished receiver staged for CI dependency inspection only."
 fi
