@@ -112,7 +112,10 @@ void loop() {
     }
   }
 
-  // Ensure a released mouse button after BLE disconnect/reconnect.
-  if (!Keyboard.isConnected()) buttonDown = false;
+  // Clear the HID button state before the next BLE pairing, too.
+  if (!Keyboard.isConnected() && buttonDown) {
+    Mouse.release(MOUSE_LEFT);
+    buttonDown = false;
+  }
   delay(1);
 }
