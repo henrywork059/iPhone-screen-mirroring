@@ -58,7 +58,7 @@ public sealed class MirrorForm : Form
         }, 0, 0);
         root.Controls.Add(new Label
         {
-            Text = "Private-network AirPlay receiver · UxPlay v1.73.7 (external dependency)",
+            Text = "SECURITY HOLD — receiver launch disabled; offline checks only",
             ForeColor = SecondaryColor, AutoSize = false, Dock = DockStyle.Fill
         }, 0, 1);
         root.Controls.Add(MakeLabel("Path to uxplay.exe"), 0, 2);
