@@ -6,6 +6,24 @@ Unlike the offline GUI preview, this workflow **compiles, bundles, and enables a
 
 The first experimental job passed on [November 5, 2026](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/42001238384) and uploaded the `iPhoneMirror-Experimental-AirPlay-TEST` artifact. A subsequent build additionally checks that the experimental compile-time switch is truly enabled.
 
+## Verified experimental package
+
+The stronger follow-up test run [#42001976254](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/42001976254) **passed every CI step**, including a compile-time assertion that the receiver is actually enabled in the experimental build. Its artifact is named `iPhoneMirror-Experimental-AirPlay-TEST` and expires **November 12, 2026**. The inner packaged ZIP is **167,508,424 bytes**, SHA-256:
+
+```
+E4C84C426B09162BAA398DE1620FC1DE4ECCC34CAE640960A395D82EA87F18A8
+```
+
+To verify the **inner ZIP** (not the downloaded outer artifact archive) in PowerShell:
+
+```powershell
+Get-FileHash .\iPhoneMirror-Experimental-AirPlay-TEST.zip -Algorithm SHA256
+```
+
+The embedded SHA-256 of the bundled native UxPlay executable is `23F2393729DC291F2F32CDBC41D97372CD8378EDAFBFFF1003B5F0A0E89794C2`. The Windows GUI verifies this fingerprint before opening any listener.
+
+**Real iPhone connection is not yet verified.** A passing CI run verifies compilation and offline runtime dependencies, not AirPlay discovery or screen rendering.
+
 ## What it actually does
 
 - Uses pinned UxPlay 1.74 **experimental** commit `7aaad6222c2e136723e6e3d25c3be784260c577d`, plus the local [short-frame fix](../patches/uxplay-experimental-mirror-short-frame.patch).
