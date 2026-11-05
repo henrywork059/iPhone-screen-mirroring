@@ -1,0 +1,20 @@
+name: UxPlay C memory-safety regression (offline)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  asan-ubsan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+      - name: Run offline C regression against patched upstream source
+        shell: bash
+        run: bash scripts/ci/test-uxplay-mirror-sanitizers.sh
