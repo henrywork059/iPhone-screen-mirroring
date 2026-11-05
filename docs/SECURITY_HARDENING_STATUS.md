@@ -7,6 +7,35 @@ AirPlay Windows prototype. No independent security audit, formal certification,
 trusted code signature or complete end-to-end testing is claimed.
 **Keep Windows Smart App Control, Defender and Windows Firewall enabled.**
 
+## Additional work completed November 6, 2026
+
+- Patched the **actual pinned UxPlay HTTP/reverse-HTTP parser** with URL, header,
+  and body size limits; bounded event Content-Length parsing; and corrected
+  leading-byte offsets. File: `patches/uxplay-http-request-bounds.patch`.
+- Added `tests/native/uxplay_http_regression.c` and
+  `tests/native/uxplay_http_fuzz.c`, compiled against upstream
+  `http_request.c` and its bundled `llhttp`. Linux ASan/UBSan regression
+  and 50,000-run coverage fuzz workflow passed:
+  [run 42129275207](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/42129275207).
+- Added mDNS compression-name regression and coverage fuzzing using the
+  actual upstream `mdnsd.c`. Linux sanitizer job passed:
+  [run 42129631917](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/42129631917).
+- The patched HTTP network-receiver Windows build completed successfully:
+  [run 42128958672](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/42128958672).
+- Exact version checks added for nine primary MSYS2 GStreamer, FFmpeg,
+  OpenSSL, libplist and JSON dependencies. The build now **fails closed**
+  on unreviewed version drift; it is not a complete dependency lock or
+  independently verified supply-chain provenance.
+- Corrected the device-test handoff to prohibit historical unsigned beta
+  execution. The normal receiver security hold and unsigned artifact
+  distribution hold are retained.
+
+**Important limits:** these tests do not fuzz complete paired AirPlay
+sessions, all libplist/audio/crypto handling or all DNS record parsing.
+A trusted publisher certificate, independent audit and clean-machine
+real-device/firewall tests remain mandatory and unavailable in this
+repository-only workflow. Do not label a build production safe on CI success.
+
 ## Changes implemented
 
 1. **Network frame validation:** the candidate AirPlay backend still pins
