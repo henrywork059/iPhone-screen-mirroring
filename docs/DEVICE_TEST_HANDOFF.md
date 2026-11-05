@@ -18,6 +18,12 @@
 - Implement and review a narrow inbound firewall policy limited to **Private** network profile and the iPhone's specific address; verify no broader existing rules.
 - Approve a **test-only build** for a dedicated trusted network, not normal daily use.
 
+## First safe device check — offline UI only
+
+The [UI-only GitHub Actions preview](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/41978061900) can be inspected on your Windows laptop now. It includes **no** UxPlay, GStreamer or AirPlay service, and its launch controls are disabled. Download the `iPhoneMirror-Offline-UI-Preview` artifact, extract both nested ZIPs, read `READ-ME-FIRST.txt`, and launch `MirrorControl.exe` as a standard user. Verify the dark UI displays a visible **SECURITY HOLD** and the receiver Start control is disabled. Do **not** bypass Windows SmartScreen or antivirus alerts if shown; report them instead.
+
+No iPhone or firewall changes are needed for this offline UI check. This must not be confused with a live mirroring test. [Detailed instructions](OFFLINE_CONTROLLER_PACKAGE.md).
+
 ## What will require you (later)
 
 1. A Windows 11 laptop and iPhone, connected **only to an isolated trusted Wi-Fi or LAN** (preferably a temporary access point with no unrelated devices). Never use a hotel, café, office, or guest network that has other clients.
