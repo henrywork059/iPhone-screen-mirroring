@@ -1,4 +1,4 @@
-#requires -Version 5.1
+#requires -Version 7.0
 <#
 .SYNOPSIS
 Offline loader-only smoke check: launches pinned UxPlay with -h/--help, which exits
