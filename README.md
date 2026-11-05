@@ -2,21 +2,30 @@
 
 A local-first iPhone-to-Windows 11 AirPlay mirroring project.
 
-> **EXPERIMENTAL TEST BUILD AVAILABLE (2026-11-05):** An explicitly opt-in Windows ZIP now includes a patched UxPlay receiver and a controller that can start it for actual iPhone AirPlay mirroring. [Download from the successful GitHub Actions build](https://github.com/henrywork059/iPhone-screen-mirroring/actions/workflows/experimental-airplay-beta.yml). Follow [experimental setup and risk warnings](docs/EXPERIMENTAL_AIRPLAY_TEST.md). **Real-device functionality is not yet confirmed.**
+> **SECURITY HOLD — NO APPROVED WINDOWS DOWNLOAD (2026-11-06):**
+> The native mirroring-only prototype is being hardened. GitHub Actions
+> compiles it and runs offline security tests, but no new unsigned executable
+> artifacts are uploaded. Earlier experiment ZIPs may still exist in old
+> Actions runs; they are **not approved for installation**, especially with
+> Smart App Control enabled. Do not bypass Windows Security.
+> [Current hardening evidence and release gates](docs/SECURITY_HARDENING_STATUS.md).
 >
 > **STABLE RELEASE SECURITY HOLD:** Default application builds and PowerShell startup remain disabled. The old UxPlay v1.73.7 release has a reported heap-buffer overflow ([issue #614](https://github.com/FDH2/UxPlay/issues/614)). The opt-in beta uses a separately pinned 1.74 experimental revision plus our regression-tested correction, but the complete AirPlay/mDNS network parser remains **unaudited**. No stable installer is available. Do not use for sensitive content or on an untrusted network.
 
 ## Offline Windows UI preview (available for user testing)
 
-The **UI-only** self-contained Windows 11 preview is available as a short-lived GitHub Actions artifact: [successful Windows preview run](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/41978061900). Download the `iPhoneMirror-Offline-UI-Preview` artifact and extract the contained `offline-controller.zip`.
+The **UI-only** self-contained Windows 11 preview can be built locally or in CI for offline inspection. Unsigned preview uploads are now disabled. Previously produced unsigned artifacts are not approved for installation while Smart App Control is enabled.
 
 It **does not contain UxPlay**, cannot mirror an iPhone, and will **not open an AirPlay listener**. Confirm that the window opens and clearly shows the disabled **Launch blocked** control. See [safe UI test instructions](docs/OFFLINE_CONTROLLER_PACKAGE.md). Do not bypass Windows security warnings for unsigned binaries.
 
-## Actual iPhone mirroring: controlled test build
+## Actual iPhone mirroring: security hold
 
-**Use [the experimental AirPlay test guide](docs/EXPERIMENTAL_AIRPLAY_TEST.md), not the old stable installation instructions.** Download the explicitly named `iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY` artifact from the [beta workflow](https://github.com/henrywork059/iPhone-screen-mirroring/actions/workflows/experimental-airplay-beta.yml), extract both ZIP layers, then run `MirrorControl.exe` as a standard user on an isolated trusted Private network. Confirm the experiment warning and choose the receiver on your iPhone under Control Center → Screen Mirroring. The PIN appears in UxPlay's separate console, and video appears in UxPlay/GStreamer's separate window.
-
-This **can open listening network ports**. No full security audit, real iPhone acceptance test or signed installer exists. **Do not bypass Smart App Control, SmartScreen or antivirus warnings.** The default controller remains locked.
+The project implements a local Windows AirPlay mirroring receiver, but it
+is **not approved for routine use or installation**. CI builds the patched
+UxPlay backend for controlled security verification only, without making
+the unsigned package available for download. Smart App Control must remain ON.
+A trusted code-signing identity, independent audit and real-device/isolated
+network validation are pending. See [the security status](docs/SECURITY_HARDENING_STATUS.md).
 
 ## Higher-quality mirroring profiles (November 2026)
 
@@ -41,16 +50,22 @@ control and touchscreen input have all been removed. The app retains AirPlay
 video/audio mirroring, quality presets, consent prompts and the default
 security hold.
 
-## Current validation results (2026-11-05)
+## Current validation (November 2026)
 
-- **PASSED:** full patched experimental Windows UxPlay source build; no network listener was started.
-- **PASSED:** Linux ASan/UBSan and Windows UCRT64 C regression tests, including real OpenSSL AES-CTR/SHA-512.
-- **PASSED:** self-contained WinForms GUI packaging inspection.
-- **PASSED:** unpublished combined bundle inspection with 241 GStreamer plugins, 208 runtime DLLs and SHA-256 inventories; approximately 166 MB ZIP.
-- **NOT DONE:** real-device screen mirroring, native runtime behavior on a clean Windows laptop, firewall isolation, complete security review and signed installer.
-- **DEFAULT SECURITY HOLD ACTIVE:** a dedicated opt-in experimental mirroring test bundle is available, but there is no approved stable release.
+- **PASSED:** source-level Windows build and help-only native runtime checks.
+- **PASSED:** ASan/UBSan bounded-frame regressions and coverage-guided
+  fuzzing of the new frame/codec validation helpers.
+- **PASSED:** GStreamer plugin allowlist verification — 16 plugins, reduced
+  from 241; native DLL count reduced from 208 to 125.
+- **IMPLEMENTED:** Private/Public Windows Firewall default inbound checks,
+  native dependency SHA-256 inventory verification, pinned GitHub Actions,
+  a file-level CycloneDX SBOM and a hold on unsigned artifact uploads.
+- **NOT COMPLETED:** full network protocol fuzzing, independent security
+  assessment, trusted signing, real iPhone tests, complete runtime isolation,
+  dependency reproducibility and release approval.
 
-See [full Windows build](docs/FULL_RECEIVER_BUILD.md), [unpublished bundle inspection](docs/PRETEST_BUNDLE.md), [dependency inventory](docs/DEPENDENCY_INVENTORY.md), and the [device-test handoff](docs/DEVICE_TEST_HANDOFF.md). The next user-required action is physical test validation **only after** a reviewed test package is approved; do not execute current experimental binaries.
+Read [Security hardening status](docs/SECURITY_HARDENING_STATUS.md)
+for the exact remaining requirements. CI passing does not imply safety.
 
 ## First prototype
 
@@ -100,4 +115,4 @@ If the UxPlay executable is in another location, change the GUI's path field or 
 
 ## Licensing
 
-The original controller/launcher code has **no license selected yet**; do not assume a license grant. UxPlay is GPL-3.0 and must be obtained separately from its upstream repository. Before any combined distribution, review GPL-3.0 obligations and third-party component licenses. No UxPlay source, executables, or GStreamer DLLs are vendored here.
+The original controller/launcher code has **no license selected yet**; do not assume a license grant. UxPlay is GPL-3.0 and must be obtained separately from its upstream repository. Before any combined distribution, review GPL-3.0 obligations and third-party component licenses. No UxPlay binaries or GStreamer DLLs are vendored in Git. The unpublished CI candidate includes corresponding UxPlay source and dependency license notices.
