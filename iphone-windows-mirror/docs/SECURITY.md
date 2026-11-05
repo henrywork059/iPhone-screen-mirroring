@@ -1,26 +1,31 @@
 # Security policy and design goals
 
-This is an unimplemented project scaffold; it has **not** been audited.
+The project now contains a Windows prototype controller and PowerShell launchers. **None of the code, network behavior, or media path has undergone a complete security audit or physical iPhone/Windows test.**
 
-## Threat model
+## Current prototype controls
 
-- Untrusted devices on the same network attempting to connect.
-- Malformed AirPlay packets and decoder input.
-- Unintended exposure on public networks.
-- Compromised build dependencies or release artifacts.
-- Leakage of private screen content or pairing keys.
+- UxPlay v1.73.7 is selected and pinned to a published commit in setup instructions, but not downloaded automatically.
+- `-pw` with no password is passed for a new random pairing PIN every connection.
+- A separate visible UxPlay console displays the PIN; the .NET controller does not persist it.
+- Launch is blocked if the physical connected Windows network profiles are not all Private.
+- The controller does not add firewall rules or request administrator permission.
 
-## Requirements before first public build
+## Remaining risks and unimplemented controls
 
-- Default to PIN pairing and reject unauthenticated sessions where protocol permits.
-- Never enable a firewall exception for Public profiles by default.
-- Keep traffic local; do not implement telemetry or remote relay.
-- Avoid administrative privileges for routine application use.
-- Minimize sensitive logs and ensure pairing secrets are stored safely.
-- Pin and update dependencies; test malformed and unexpected network input.
-- Generate SHA-256 checksums and document release provenance.
-- Add instructions for reporting vulnerabilities privately before enabling public release.
+- Untrusted devices on the same LAN, Windows Public-profile exposure from **existing** firewall rules, and virtual network adapters.
+- Malformed AirPlay packets, vulnerable media decoders, and unreviewed dependency binaries.
+- Console PIN exposure during screen sharing; unexpected UxPlay log behavior.
+- Key-management and bundled-distribution compliance are not independently assessed.
+- Stopping from the GUI forcibly terminates the UxPlay process.
 
-## Handling uncertain security claims
+**Network profile checks do not ensure network confinement.** Review Windows Firewall rules separately and only test with non-sensitive content on a network you trust.
 
-Do not market the software as 'secure' solely because it is open source. Require security testing and review before making security guarantees.
+## Before public release
+
+- Test the real protocol and network exposure; document observed results.
+- Design a narrowly scoped firewall rule for Private networks and its uninstall path.
+- Audit libraries and monitor vulnerabilities; generate verifiable release checksums.
+- Review GPL-3.0 obligations, dependency notices and signing requirements.
+- Establish a private process for reporting vulnerabilities.
+
+Do not market the application as secure based solely on source availability.
