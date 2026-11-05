@@ -7,6 +7,7 @@ on:
       - 'src/MirrorControl/**'
       - 'scripts/ci/build-full-receiver-windows.sh'
       - 'scripts/ci/stage-native-runtime.sh'
+      - 'scripts/ci/New-NativeSbom.ps1'
       - 'patches/uxplay-experimental-mirror-short-frame.patch'
       - 'tests/native/**'
       - '.github/workflows/experimental-airplay-beta.yml'
