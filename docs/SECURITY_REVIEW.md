@@ -33,6 +33,20 @@ The development-branch patch contains `for (int i = 0; i < mirror_buffer->nextDe
 4. Real Windows firewall and network exposure tests, first on a controlled, isolated trusted LAN, followed by supervised iPhone functional tests using non-sensitive content.
 5. Update setup instructions, application version verification and CI safety checks. Record results before any release or recommendation to install.
 
+## Progress — offline regression completed
+
+As of November 5, 2026, our repository contains an **experimental, source-only fix** at [`patches/uxplay-mirror-short-frame.patch`](../patches/uxplay-mirror-short-frame.patch). It is applied to pinned UxPlay v1.73.7 **only in an isolated CI test**, never by the Windows launchers.
+
+- **Passed:** short/empty/boundary video-frame regression against the real upstream C module with deterministic crypto test doubles, under ASan/UBSan.
+- **Passed:** same categories of regression against the real UxPlay OpenSSL AES-CTR/SHA-512 implementation, under ASan/UBSan.
+- **Passed:** Windows C# controller build and existing fail-closed launcher checks.
+- **Not performed:** Windows native UxPlay compilation, full network-protocol fuzzing, installer audit, dynamic firewall isolation, or real iPhone tests.
+
+Upstream's current development fix differs from our candidate: its short-frame branch checks for partial input **inside** a loop still bounded by the original residual length. Our source review identifies a correctness risk for partial input and a possible out-of-bounds access for empty input. Upstream review and independent Windows validation remain necessary.
+
+CI jobs: [offline memory-safety test](https://github.com/henrywork059/iPhone-screen-mirroring/actions/workflows/uxplay-memory-safety.yml) and [Windows source checks](https://github.com/henrywork059/iPhone-screen-mirroring/actions/workflows/windows-checks.yml).
+
+**No change to the security hold:** successful targeted regressions do not establish that the complete AirPlay receiver is safe.
 ## What remains safe to do
 
 - Review source code and requirements.
