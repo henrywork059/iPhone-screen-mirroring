@@ -1,22 +1,18 @@
 diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
 --- a/lib/raop_rtp_mirror.c
 +++ b/lib/raop_rtp_mirror.c
-@@ -29,7 +29,8 @@
- #include "compat.h"
+@@ -30,6 +30,7 @@
  #include "logger.h"
  #include "byteutils.h"
--#include "mirror_buffer.h"
-+#include "mirror_buffer.h"
+ #include "mirror_buffer.h"
 +#include "uxplay_mirror_validation.h"
  #include "stream.h"
  #include "utils.h"
  #include "plist/plist.h"
-@@ -317,7 +318,13 @@
-             }
+@@ -318,6 +319,12 @@
  
              /*packet[0:3] contains the payload size */
--            int payload_size = byteutils_get_int(packet, 0);
-+            int payload_size = byteutils_get_int(packet, 0);
+             int payload_size = byteutils_get_int(packet, 0);
 +            if (!uxplay_mirror_valid_payload_size(payload_size)) {
 +                logger_log(raop_rtp_mirror->logger, LOGGER_ERR,
 +                           "Rejected invalid/oversized mirror frame length: %d", payload_size);
@@ -26,7 +22,7 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
              char packet_description[13] = {0};
              char *p = packet_description;
              int n = sizeof(packet_description);
-@@ -362,7 +369,7 @@
+@@ -362,10 +369,11 @@
              /* "streaming report" packets have no timestamp in packet[8:15] */
  
              if (payload == NULL) {
@@ -34,87 +30,57 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
 +                payload = malloc(payload_size ? (size_t) payload_size : 1u);
                  if (!payload) {
                      logger_log(raop_rtp_mirror->logger, LOGGER_ERR,"raop_rtp_mirror: Memory allocation failed (payload_out)");
-                     exit(1);
-@@ -365,10 +372,11 @@
-                 payload = malloc(payload_size);
-                 if (!payload) {
-                     logger_log(raop_rtp_mirror->logger, LOGGER_ERR,"raop_rtp_mirror: Memory allocation failed (payload_out)");
 -                    exit(1);
--                }
--		
--                readstart = 0;
 +                    conn_reset = true;
 +                    break;
-+                }
-+		
-+                readstart = 0;
-             }
- 
-             while ((int) readstart < payload_size) {
-@@ -391,8 +399,13 @@
-             }
+                 }
+ 		
+                 readstart = 0;
+@@ -392,6 +400,11 @@
  
              switch (packet[4]) {
--            case  0x00:
--                // Normal video data (VCL NAL)
-+            case  0x00:
+             case  0x00:
 +                if (payload_size == 0) {
 +                    logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
 +                               "Dropping empty encrypted mirror video frame");
 +                    break;
 +                }
-+                // Normal video data (VCL NAL)
+                 // Normal video data (VCL NAL)
  
                  // Conveniently, the video data is already stamped with the remote wall clock time,
-                 // so no additional clock syncing needed. The only thing odd here is that the video
-@@ -436,9 +449,10 @@
+@@ -436,7 +449,8 @@
                  payload_out = (unsigned char*) malloc(payload_size + sps_pps_len);
                  if (!payload_out) {
                      logger_log(raop_rtp_mirror->logger, LOGGER_ERR,"raop_rtp_mirror: Memory allocation failed (payload_out)");
 -                    exit(1);
--                }
--                if (sps_pps_len)
-+                    valid_data = false;
++                    conn_reset = true;
 +                    break;
-+                }
-+                if (sps_pps_len)
-                     memcpy(payload_out, sps_pps, sps_pps_len);
                  }
-                 payload_decrypted = payload_out + sps_pps_len;
-@@ -450,15 +464,18 @@
-                 bool valid_data = true;
+                 if (sps_pps_len) {
+                     memcpy(payload_out, sps_pps, sps_pps_len);
+@@ -451,11 +465,14 @@
                  int nalu_size = 0;
                  int nalus_count = 0;
--                while (nalu_size < payload_size) {
--                    int nc_len = byteutils_get_int_be(payload_decrypted, nalu_size);
--                    /* nc_len is read from the payload, so it is only a
--                     * length if the unit it claims fits in what is left. */
--                    if (nc_len < 0 || nalu_size + 4 > payload_size ||
--                        nc_len > payload_size - nalu_size - 4) {
--                        valid_data = false;
--                        break;
--                    }
-+                while (nalu_size < payload_size) {
+                 while (nalu_size < payload_size) {
 +                    /* Verify the four-byte length and one NAL byte are in-bounds
 +                     * BEFORE reading either from the untrusted frame. */
 +                    if (payload_size - nalu_size < 5) {
 +                        valid_data = false;
 +                        break;
 +                    }
-+                    int nc_len = byteutils_get_int_be(payload_decrypted, nalu_size);
+                     int nc_len = byteutils_get_int_be(payload_decrypted, nalu_size);
+-                    /* nc_len is read from the payload, so it is only a
+-                     * length if the unit it claims fits in what is left. */
+-                    if (nc_len < 0 || nalu_size + 4 > payload_size ||
+-                        nc_len > payload_size - nalu_size - 4) {
 +                    if (!uxplay_mirror_valid_nal(payload_size, nalu_size, nc_len)) {
-+                        valid_data = false;
-+                        break;
-+                    }
-                     memcpy(payload_decrypted + nalu_size, nal_start_code, 4);
-                     nalu_size += 4;
-                     nalus_count++;
-@@ -611,8 +628,15 @@
+                         valid_data = false;
+                         break;
+                     }
+@@ -611,6 +628,13 @@
                      unsupported_codec = true;
                      break;
                  }
--                /* test for a H265 VPS/SPS/PPS */
--                unsigned char hvc1[] = { 0x68, 0x76, 0x63, 0x31 };
 +                /* Both H.264 and H.265 codec records require at least eight
 +                 * bytes before inspecting the four-byte codec marker. */
 +                if (payload_size < 8) {
@@ -122,11 +88,9 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
 +                               "Dropping truncated mirror codec packet");
 +                    break;
 +                }
-+                /* test for a H265 VPS/SPS/PPS */
-+                unsigned char hvc1[] = { 0x68, 0x76, 0x63, 0x31 };
+                 /* test for a H265 VPS/SPS/PPS */
+                 unsigned char hvc1[] = { 0x68, 0x76, 0x63, 0x31 };
  
-                 if (!memcmp(payload + 4, hvc1, 4)) {
-                     /* hvc1 HECV detected */
 @@ -634,59 +658,30 @@
                          conn_reset = true;
                          break;
@@ -168,22 +132,6 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
 -                    if (memcmp(ptr, pps_start_code, 4)) {
 -                       logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "non-conforming HEVC VPS/SPS/PPS payload (PPS)");			
 -                        raop_rtp_mirror->callbacks.video_pause(raop_rtp_mirror->callbacks.cls);
--                        break;
--                    }
--                    short pps_size = byteutils_get_short_be(ptr, 3);
--                    ptr += 5;
--                    unsigned char *pps = ptr;
--                    if (logger_debug) {
--                        char *str = utils_data_to_string(pps, pps_size, 16);
--                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "h265 pps size %d\n%s",pps_size, str);
--                        free(str);
--                    }
--                    sps_pps_len = vps_size + sps_size + pps_size + 12;
--                    if (sps_pps_len > sizeof(sps_pps)) {
--                        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "\nInvalid SPS+PPS length %zu exceeds limit %zu, aborting",
--                                   sps_pps_len, sizeof(sps_pps));
--                        break;
--                    }
 +                    const unsigned char vps_start_code[] = { 0xa0, 0x00, 0x01, 0x00 };
 +                    const unsigned char sps_start_code[] = { 0xa1, 0x00, 0x01, 0x00 };
 +                    const unsigned char pps_start_code[] = { 0xa2, 0x00, 0x01, 0x00 };
@@ -198,27 +146,35 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
 +                            &codec_offset, pps_start_code, &pps, &pps_size)) {
 +                        logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
 +                                   "Dropping malformed or truncated HEVC VPS/SPS/PPS packet");
-+                        break;
-+                    }
+                         break;
+                     }
+-                    short pps_size = byteutils_get_short_be(ptr, 3);
+-                    ptr += 5;
+-                    unsigned char *pps = ptr;
+-                    if (logger_debug) {
+-                        char *str = utils_data_to_string(pps, pps_size, 16);
+-                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "h265 pps size %d\n%s",pps_size, str);
+-                        free(str);
+-                    }
+-                    sps_pps_len = vps_size + sps_size + pps_size + 12;
 +                    sps_pps_len = vps_size + sps_size + pps_size + 12u;
-+                    if (sps_pps_len > sizeof(sps_pps)) {
+                     if (sps_pps_len > sizeof(sps_pps)) {
+-                        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "\nInvalid SPS+PPS length %zu exceeds limit %zu, aborting",
+-                                   sps_pps_len, sizeof(sps_pps));
 +                        logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
 +                                   "Dropping oversized HEVC VPS/SPS/PPS packet");
 +                        sps_pps_len = 0;
-+                        break;
-+                    }
+                         break;
+                     }
 +                    unsigned char *ptr = sps_pps;
                      ptr = sps_pps;
                      memcpy(ptr, nal_start_code, 4);
                      ptr += 4;
-@@ -723,10 +718,27 @@
+@@ -723,9 +718,26 @@
                          conn_reset = true;
                          break;
                      }
 -                    short sps_size = byteutils_get_short_be(payload,6);
--                    unsigned char *sequence_parameter_set = payload + 8;
--                    short pps_size = byteutils_get_short_be(payload, sps_size + 9);
--                    unsigned char *picture_parameter_set = payload + sps_size + 11;
 +                    if (payload_size < 11) {
 +                        logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
 +                                   "Dropping truncated H.264 SPS/PPS record");
@@ -231,15 +187,14 @@ diff --git a/lib/raop_rtp_mirror.c b/lib/raop_rtp_mirror.c
 +                                   "Dropping invalid H.264 SPS length");
 +                        break;
 +                    }
-+                    unsigned char *sequence_parameter_set = payload + 8;
-+                    short pps_size = byteutils_get_short_be(payload, sps_size + 9);
+                     unsigned char *sequence_parameter_set = payload + 8;
+                     short pps_size = byteutils_get_short_be(payload, sps_size + 9);
 +                    if (!uxplay_mirror_valid_h264_parameter_sets((size_t) payload_size,
 +                                                                  sps_size, pps_size)) {
 +                        logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
 +                                   "Dropping invalid H.264 PPS length");
 +                        break;
 +                    }
-+                    unsigned char *picture_parameter_set = payload + sps_size + 11;
+                     unsigned char *picture_parameter_set = payload + sps_size + 11;
                      int data_size = 6;
                      if (logger_debug) {
-                         char *str = utils_data_to_string(payload, data_size, 16);
