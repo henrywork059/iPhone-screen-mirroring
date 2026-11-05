@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'src/MirrorControl/**'
+      - 'tests/ControlLogicTests/**'
       - 'scripts/*.ps1'
       - 'config/**'
       - '.github/workflows/windows-checks.yml'
@@ -61,6 +62,8 @@ jobs:
             throw 'Opt-in and default release gates are not separated.'
           }
           Write-Host 'Emergency security hold remains active. This is not an audit.'
+      - name: Check resolution profiles and HID command protocol
+        run: dotnet run --project tests/ControlLogicTests/ControlLogicTests.csproj --configuration Release
       - name: Build Windows controller
         run: dotnet build src/MirrorControl/MirrorControl.csproj --configuration Release
       # No prebuilt UxPlay binaries, installers, or release artifacts are distributed.
