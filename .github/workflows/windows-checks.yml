@@ -79,6 +79,22 @@ jobs:
             }
           }
           Write-Host 'Unsigned receiver and controller artifact uploads remain disabled.'
+      - name: Smoke-test CycloneDX generator with harmless synthetic files
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $fake = Join-Path $env:RUNNER_TEMP 'iphone-mirror-sbom-test'
+          New-Item -ItemType Directory -Force -Path (Join-Path $fake 'bin') | Out-Null
+          foreach ($filename in @('uxplay.exe','dependency.dll','scanner.exe')) {
+            Set-Content -LiteralPath (Join-Path $fake "bin/$filename") -Value "fixture only - $filename"
+          }
+          Set-Content -LiteralPath (Join-Path $fake 'SHA256SUMS.txt') -Value 'offline test inventory'
+          pwsh -NoProfile -File scripts/ci/New-NativeSbom.ps1 -NativeRoot $fake
+          if ($LASTEXITCODE -ne 0) { throw 'Native CycloneDX generator failed' }
+          $report = Get-Content (Join-Path $fake 'native-components.cdx.json') -Raw | ConvertFrom-Json
+          if ($report.bomFormat -ne 'CycloneDX' -or $report.components.Count -ne 3) {
+            throw 'Native CycloneDX generator returned an invalid file inventory'
+          }
       - name: Check mirroring resolution profiles
         run: dotnet run --project tests/ControlLogicTests/ControlLogicTests.csproj --configuration Release
       - name: Build Windows controller
