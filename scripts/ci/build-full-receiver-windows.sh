@@ -40,4 +40,16 @@ echo "Selected toolchain/dependency versions:"
 pacman -Q mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake \
   mingw-w64-ucrt-x86_64-libplist mingw-w64-ucrt-x86_64-gstreamer \
   mingw-w64-ucrt-x86_64-openssl
+# Optional staging for PRIVATE/EPHEMERAL package-inspection CI only.
+# Do not enable artifact upload or publish this experimental executable.
+if [[ -n "${RECEIVER_STAGING_DIR:-}" ]]; then
+  mkdir -p "$RECEIVER_STAGING_DIR/bin" "$RECEIVER_STAGING_DIR/source-notices"
+  cp "$exe" "$RECEIVER_STAGING_DIR/bin/uxplay.exe"
+  cp "$tmp/uxplay/LICENSE" "$RECEIVER_STAGING_DIR/source-notices/UXPLAY-GPL-3.0-LICENSE"
+  cp "$root/patches/uxplay-experimental-mirror-short-frame.patch" "$RECEIVER_STAGING_DIR/source-notices/candidate-short-frame.patch"
+  printf "%s\n" "$pinned" > "$RECEIVER_STAGING_DIR/source-notices/UPSTREAM-COMMIT"
+  git -C "$tmp/uxplay" diff -- lib/mirror_buffer.c > "$RECEIVER_STAGING_DIR/source-notices/applied-source-diff.patch"
+  sha256sum "$exe" > "$RECEIVER_STAGING_DIR/source-notices/development-binary-sha256.txt"
+  echo "Unpublished receiver staged for CI dependency inspection only."
+fi
 echo 'PASS: pinned patched experimental UxPlay source and full Windows executable build (NOT executed).'
