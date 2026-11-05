@@ -6,14 +6,16 @@ Unlike the offline GUI preview, this workflow **compiles, bundles, and enables a
 
 The first experimental job passed on [November 5, 2026](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/42001238384) and uploaded the `iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY` artifact. A subsequent build additionally checks that the experimental compile-time switch is truly enabled.
 
-## Verified mirroring-only build
+## Current secure build policy
 
-Use the [experimental mirroring-only CI workflow](https://github.com/henrywork059/iPhone-screen-mirroring/actions/workflows/experimental-airplay-beta.yml)
-to locate a successful build. Its job logs include the exact SHA-256 of the
-**inner** ZIP, plus the hash pinned into the controller for the native UxPlay.
-Never reuse a historical ZIP checksum for a newer build. These checks
-verify reproducibility/integrity, **not** Smart App Control trust or
-security approval.
+The [AirPlay native security workflow](../.github/workflows/experimental-airplay-beta.yml)
+compiles an unpublished candidate, runs exact-source patch checks,
+native dependency verification, the offline loader check, and a native
+SBOM generation step. It does **not** upload Windows executable artifacts.
+A successful CI run is not an independent security audit, and the untrusted
+native listener is not yet approved for device testing.
+
+See [Security hardening status](SECURITY_HARDENING_STATUS.md).
 
 ## What it actually does
 
@@ -46,17 +48,14 @@ before we can offer a compatible release.
 
 UxPlay opens video in a separate GStreamer window. The PIN is printed in a separate console. No iPhone control, Bluetooth peripheral, embedded video canvas, signed installer, formal dependency audit or DRM video support is included.
 
-## When a CI artifact is available
+## Security and installation guidance
 
-1. Open the successful [experimental AirPlay workflow](https://github.com/henrywork059/iPhone-screen-mirroring/actions/workflows/experimental-airplay-beta.yml).
-2. Download `iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY` from a successful run and extract the nested ZIP into a directory, **only if you accept the limitations**.
-3. Read `READ-ME-FIRST-EXPERIMENTAL.txt`. Check that Windows Defender and SmartScreen do not raise a warning; **do not bypass warnings**.
-4. Use a trusted, isolated Private-network Wi-Fi connection shared with your iPhone. Run `MirrorControl.exe` as a normal user.
-5. Click **Start test receiver** and accept the explicit experimental test prompt. If Windows asks for firewall permission, choose **Private only**, never Public.
-6. On your iPhone open Control Center → Screen Mirroring → `iPhone Mirror`, enter the PIN from the separate UxPlay console and check whether a GStreamer video window displays your screen.
-7. Test only non-sensitive content. Stop the receiver and close it afterward. Do not post pairing PINs, keys, or screenshots of personal information.
-
-Report Windows/iOS versions and whether the receiver appears, whether a PIN appears, whether video/audio play, and any sanitized error text. **A successful build is not proof mirroring works on your device**; that is what this supervised test establishes.
+Do not use historical unsigned GitHub Actions ZIPs, install the prototype,
+disable Windows Smart App Control, disable Defender, add security exclusions,
+or broaden firewall permissions to make an experimental receiver run.
+The repository currently supports **source review and offline tests**.
+Release requires an independent security audit, proper signed binaries,
+a controlled firewall review and validated iPhone compatibility.
 
 ## Licensing and source
 
