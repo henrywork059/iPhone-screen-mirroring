@@ -18,8 +18,8 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
         with:
           dotnet-version: 8.0.x
       - name: Build self-contained offline Windows controller and inspect ZIP
@@ -47,11 +47,7 @@ jobs:
           Write-Host ('Offline controller ZIP SHA256: ' + $hash.Hash)
           Write-Host ('Offline controller ZIP bytes: ' + (Get-Item offline-controller.zip).Length)
           Write-Host 'Built and checked. No binary or ZIP is published by this workflow.'
-      - name: Upload offline UI-only preview (no receiver)
-        uses: actions/upload-artifact@v4
-        with:
-          name: iPhoneMirror-Offline-UI-Preview
-          path: offline-controller.zip
-          retention-days: 7
-          if-no-files-found: error
-      # This intentionally excludes all UxPlay/GStreamer binaries and cannot mirror an iPhone.
+      # The offline UI is also unsigned: keep it out of user distribution
+      # while Smart App Control is enabled, rather than encouraging bypass.
+      - name: Enforce offline unsigned distribution hold
+        run: echo 'SECURITY HOLD - no unsigned controller ZIP is uploaded.'

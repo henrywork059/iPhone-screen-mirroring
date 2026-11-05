@@ -1,4 +1,4 @@
-name: Experimental AirPlay receiver beta (actual mirroring, opt-in)
+name: AirPlay native security build (unpublished, no listener)
 
 on:
   push:
@@ -21,13 +21,13 @@ jobs:
     timeout-minutes: 35
     steps:
       - name: Checkout project source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Set up .NET 8
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
         with:
           dotnet-version: 8.0.x
       - name: Set up UCRT64 compiler, receiver and media dependencies
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e
         with:
           msystem: UCRT64
           update: true
@@ -157,11 +157,15 @@ jobs:
           Write-Host ('Experimental test ZIP bytes: ' + $zip.Length)
           Write-Host ('Experimental test ZIP SHA-256: ' + $digest)
           Write-Host ('Pinned receiver SHA-256 embedded in GUI: ' + $sha)
-      - name: Upload opt-in experimental AirPlay mirroring-only test bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY
-          path: _beta/iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY.zip
-          retention-days: 7
-          if-no-files-found: error
-      # This is an explicitly experimental artifact, not a stable GitHub Release.
+      # SECURITY HOLD: no public artifact upload until signed release clearance.
+      # The compiled candidate remains ephemeral on the GitHub runner.
+      # A trusted Authenticode identity, a completed independent security
+      # review, and controlled real-device validation are still required.
+      - name: Enforce unsigned distribution hold
+        shell: pwsh
+        run: |
+          if (Test-Path _beta/iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY.zip) {
+            Write-Host 'SECURITY HOLD: candidate compiled, tests passed. No unsigned artifact is uploaded.'
+          } else {
+            throw 'Expected candidate for offline inspection is missing.'
+          }

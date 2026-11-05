@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout project
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Run offline C regression against patched upstream source
         shell: bash
         run: bash scripts/ci/test-uxplay-mirror-sanitizers.sh
@@ -29,9 +29,9 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout project
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Set up MSYS2 UCRT64 compiler and OpenSSL
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e
         with:
           msystem: UCRT64
           update: true
