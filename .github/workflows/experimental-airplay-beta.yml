@@ -86,6 +86,9 @@ jobs:
           $receiver = Resolve-Path _beta/native/bin/uxplay.exe
           $sha = (Get-FileHash -LiteralPath $receiver -Algorithm SHA256).Hash
           $code = @"
+          #if !EXPERIMENTAL_RECEIVER
+          #error This package must compile with EXPERIMENTAL_RECEIVER enabled
+          #endif
           namespace MirrorControl;
           internal static class ExperimentalBuildIdentity
           {
