@@ -16,7 +16,7 @@ The firmware and library compilation are independently checked in GitHub Actions
 
 ## Steps when you have compatible hardware
 
-1. Install the above exact core and library in Arduino IDE; open `firmware/esp32-hid-bridge/esp32-hid-bridge.ino`.
+1. Install the above exact core and library in Arduino IDE; open `firmware/esp32_hid_bridge/esp32_hid_bridge.ino`.
 2. Select your ESP32 board and flash over USB. Disconnect any other serial monitor that has the COM port open.
 3. Pair the new BLE HID device with your iPhone. Turn on AssistiveTouch so the pointer can act on the interface.
 4. In the experimental Windows mirror app, click **Input pad (ESP32)**, choose the device's COM port and **Connect USB**.
