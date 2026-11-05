@@ -47,8 +47,6 @@ internal sealed class BleHidCliProcess : IDisposable
                     StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("Bluetooth companion checksum mismatch; refusing to run it.");
         }
-#else
-        throw new InvalidOperationException("Bluetooth companion is not enabled in the normal build.");
 #endif
 
         var info = new ProcessStartInfo(exe)
@@ -105,7 +103,6 @@ internal sealed class BleHidCliProcess : IDisposable
             }
             catch (IOException) { return false; }
             catch (InvalidOperationException) { return false; }
-            catch (ObjectDisposedException) { return false; }
         }
     }
 
