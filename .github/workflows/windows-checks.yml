@@ -1,0 +1,36 @@
+name: Windows source checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Validate PowerShell syntax
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @('scripts/Start-Mirroring.ps1', 'scripts/Check-Prerequisites.ps1')
+          foreach ($path in $files) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path).Path, [ref]$tokens, [ref]$parseErrors) | Out-Null
+            if ($parseErrors.Count -gt 0) {
+              $parseErrors | Format-List | Out-String | Write-Error
+              throw "PowerShell syntax invalid: $path"
+            }
+            Write-Host "Syntax OK: $path"
+          }
+      - name: Build Windows controller
+        run: dotnet build src/MirrorControl/MirrorControl.csproj --configuration Release
+      # No prebuilt UxPlay binaries, installers, or release artifacts are distributed.
