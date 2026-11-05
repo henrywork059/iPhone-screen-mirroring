@@ -41,7 +41,9 @@ As of November 5, 2026, our repository contains an **experimental, source-only f
 - **Passed:** same categories of regression against the real UxPlay OpenSSL AES-CTR/SHA-512 implementation, under ASan/UBSan.
 - **Passed:** Windows C# controller build and existing fail-closed launcher checks.
 - **Passed:** Windows UCRT64 compilation and execution of the patched upstream C regression both with deterministic crypto test doubles and with UxPlay's real OpenSSL AES-CTR/SHA-512 routines (without running any network receiver).
-- **Not performed:** full Windows UxPlay executable build, network-protocol fuzzing, installer audit, dynamic firewall isolation, or real iPhone tests.
+- **Passed:** full UxPlay Windows executable build from a separately pinned experimental 1.74 development commit, with a local source patch and *without launching a network receiver*. [CI build](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/41974814695).
+- **Passed:** ephemeral portable bundle inspection; 241 GStreamer plugin DLLs, 208 native runtime DLLs, SHA-256 file inventory and a ~166 MB ZIP, **discarded without release**. [Bundle CI](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/41976855941).
+- **Not performed:** full network-protocol fuzzing, independent audit of the experimental mDNS implementation, comprehensive third-party license review, clean-machine package execution, dynamic firewall isolation, or real iPhone tests.
 
 Upstream's current development fix differs from our candidate: its short-frame branch checks for partial input **inside** a loop still bounded by the original residual length. Our source review identifies a correctness risk for partial input and a possible out-of-bounds access for empty input. Upstream review and independent Windows validation remain necessary.
 
@@ -56,5 +58,15 @@ CI jobs: [offline memory-safety test](https://github.com/henrywork059/iPhone-scr
 - Improve the controller's UI and tests without executing a network listener.
 - Build/check the **controller only** with .NET 8 and GitHub Actions.
 - Open issues and prepare a future test plan.
+
+### Distribution blockers
+
+- The full Windows build targets UxPlay **1.74 experimental** at commit `7aaad6222c2e136723e6e3d25c3be784260c577d` with the project's separately reviewed short-frame candidate patch. A successful build does **not** promote experimental code to stable, security-reviewed status.
+- The proposed bundle includes **241 GStreamer plugins**, increasing optional decoder attack surface. Reduce or review the plugins and determine the required transitive DLLs before distribution.
+- Provide corresponding UxPlay GPL-3.0 source and notices, complete third-party license information and appropriately handled source obligations before conveying executables.
+- Verify firewall behavior, pairing and dynamic GStreamer plugin discovery on a clean isolated Windows/iPhone environment. No source-only test establishes this.
+- The app's receiver launch guard remains enabled. **Do not bypass it** merely to try the unpublished build.
+
+See [dependency inventory](DEPENDENCY_INVENTORY.md), [bundle inspection](PRETEST_BUNDLE.md), and [device-test handoff](DEVICE_TEST_HANDOFF.md).
 
 This is not a formal security audit, malware certification or assurance of zero vulnerabilities.

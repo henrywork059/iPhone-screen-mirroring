@@ -22,3 +22,9 @@ Workflow: [Portable test-bundle packaging inspection](../.github/workflows/prete
 4. Real Windows firewall isolation and iPhone discovery, pairing, video and audio.
 
 Packaging checks do not justify changing the receiver security hold. No test package should be distributed until security review and explicit validation approval.
+
+## Completed inspection (2026-11-05)
+
+[CI run #41976855941](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/41976855941) passed. It assembled 241 GStreamer plugins and 208 native DLLs, generated a SHA-256 file inventory and inspected a 165,935,476-byte ZIP (about 166 MB). ZIP SHA-256 was `189486DF339EBEC77D5767A5D49AB987F2B8D42D5D0BA16030B70F7E83B219A8`, **informational for an unpublished and discarded build**.
+
+The inspection discovered a missing optional JSON-GLib dependency, which was included for the successful rerun. The package was neither executed nor distributed. No device or security validation is implied.

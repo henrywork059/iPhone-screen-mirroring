@@ -6,7 +6,9 @@
 - [x] Identify UxPlay v1.73.7 stable release, Windows 11 build requirements, and GPL-3.0 license.
 - [x] Pin its release commit in [Windows setup](../../docs/WINDOWS_SETUP.md) for historical traceability.
 - [ ] Replace blocked v1.73.7 with a reviewed, published patched release and security regression tests.
-- [ ] Reproduce Windows UxPlay build on a physical laptop.
+- [x] Compile full patched experimental UxPlay on GitHub-hosted Windows runner (build-only; not stable).
+- [x] Inspect portable bundle structure without releasing it.
+- [ ] Reproduce Windows UxPlay runtime on a physical isolated laptop.
 - [ ] Validate iPhone discovery, video, audio, and PIN entry.
 
 ## Milestone 1 — initial receiver controller (source present, not device-verified)

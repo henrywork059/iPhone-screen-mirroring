@@ -35,3 +35,14 @@ The CI-generated experimental `uxplay.exe` had an **informational SHA-256** of `
 - Include license notices, GPL-3.0 source availability and applicable third-party source offers.
 - Review the experimental mDNS implementation and UxPlay protocol parsing; complete isolated network testing.
 - Code signing and a usable installer remain unimplemented.
+
+## Selected vulnerability disclosures reviewed (2026-11-05)
+
+Published MSYS2 vulnerability lists can include **historical CVEs** even when the current package is beyond the upstream fixed version. The selected versions were compared with the maintainers' advisories:
+
+- GStreamer-SA-2026-0047 (CVE-2026-12892, H.264 parser): fixed in GStreamer **1.28.5**. Current build used **1.28.8**: https://gstreamer.freedesktop.org/security/sa-2026-0047.html
+- GStreamer-SA-2026-0048 (CVE-2026-12891, H.266 parser): fixed in **1.28.5**. Current build used **1.28.8**: https://gstreamer.freedesktop.org/security/sa-2026-0048.html
+- GStreamer-SA-2026-0072 (CVE-2026-73433/73434, AVI demuxer): fixed in **1.28.6**. Current build used **1.28.8**: https://gstreamer.freedesktop.org/security/sa-2026-0072.html
+- Older libplist CVE-2017-5834/5835/5836 entries are reported for ancient versions. Debian reports fixed versions predating 2.7.0, but that is not a substitute for directly verifying the exact MSYS2 binary build: https://security-tracker.debian.org/tracker/CVE-2017-5836
+
+This checks **selected known advisories only**; it is not a comprehensive dependency-security audit. The UxPlay short-frame finding and unverified experimental mDNS code remain separate blockers.

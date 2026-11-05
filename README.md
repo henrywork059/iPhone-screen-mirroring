@@ -6,6 +6,17 @@ A local-first iPhone-to-Windows 11 AirPlay mirroring project.
 
 > **Prototype source available; Windows/iPhone end-to-end test pending.** This repository does **not** include an AirPlay engine, prebuilt installer, or verified working release.
 
+## Current validation results (2026-11-05)
+
+- **PASSED:** full patched experimental Windows UxPlay source build; no network listener was started.
+- **PASSED:** Linux ASan/UBSan and Windows UCRT64 C regression tests, including real OpenSSL AES-CTR/SHA-512.
+- **PASSED:** self-contained WinForms GUI packaging inspection.
+- **PASSED:** unpublished combined bundle inspection with 241 GStreamer plugins, 208 runtime DLLs and SHA-256 inventories; approximately 166 MB ZIP.
+- **NOT DONE:** real-device screen mirroring, native runtime behavior on a clean Windows laptop, firewall isolation, complete security review and signed installer.
+- **SECURITY HOLD ACTIVE:** no usable receiver release or downloadable beta is available.
+
+See [full Windows build](docs/FULL_RECEIVER_BUILD.md), [unpublished bundle inspection](docs/PRETEST_BUNDLE.md), [dependency inventory](docs/DEPENDENCY_INVENTORY.md), and the [device-test handoff](docs/DEVICE_TEST_HANDOFF.md). The next user-required action is physical test validation **only after** a reviewed test package is approved; do not execute current experimental binaries.
+
 ## First prototype
 
 **Offline progress:** Proposed short-frame fix has passed Linux AddressSanitizer/UndefinedBehaviorSanitizer tests and Windows UCRT64 native regression tests, including real OpenSSL cryptography. This is *not* a full receiver audit; all AirPlay launch paths remain blocked. [Validation results](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/41960621529).
