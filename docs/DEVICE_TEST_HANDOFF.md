@@ -1,6 +1,11 @@
-# Device-test handoff — experimental mirroring test possible
+# Device-test handoff — suspended pending security approval
 
-> **Opt-in beta now available:** the separate [experimental AirPlay test build](EXPERIMENTAL_AIRPLAY_TEST.md) contains a patched UxPlay receiver and a controller that can start it. Real iPhone compatibility and full network security remain unverified. Normal builds remain disabled. Test only if you accept the documented risk and can use an isolated trusted network; the package is not for normal use.
+> **DO NOT INSTALL OR RUN HISTORICAL BETA ZIPS.** Smart App Control must remain
+> enabled. Our experimental native receiver remains under security review,
+> and no new unsigned executable artifacts are distributed.
+> [Security hardening status](SECURITY_HARDENING_STATUS.md) is the authoritative
+> current release policy. The steps below are **future test criteria**, not
+> current authorization to run a network receiver.
 
 ## Remote development already completed
 
@@ -18,11 +23,13 @@
 - Implement and review a narrow inbound firewall policy limited to **Private** network profile and the iPhone's specific address; verify no broader existing rules.
 - Approve a **test-only build** for a dedicated trusted network, not normal daily use.
 
-## First safe device check — offline UI only
+## Current safe checks — source review and CI only
 
-The [UI-only GitHub Actions preview](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/41978061900) can be inspected on your Windows laptop now. It includes **no** UxPlay, GStreamer or AirPlay service, and its launch controls are disabled. Download the `iPhoneMirror-Offline-UI-Preview` artifact, extract both nested ZIPs, read `READ-ME-FIRST.txt`, and launch `MirrorControl.exe` as a standard user. Verify the dark UI displays a visible **SECURITY HOLD** and the receiver Start control is disabled. Do **not** bypass Windows SmartScreen or antivirus alerts if shown; report them instead.
-
-No iPhone or firewall changes are needed for this offline UI check. This must not be confused with a live mirroring test. [Detailed instructions](OFFLINE_CONTROLLER_PACKAGE.md).
+The offline Windows source checks, native C regression workflows,
+libFuzzer tests and unpublished binary/package checks can run in CI.
+No unsigned Windows executable should be downloaded or launched.
+For physical tests after independent review and trusted publisher signing,
+use the future checklist below.
 
 ## What will require you (later)
 
@@ -32,7 +39,7 @@ No iPhone or firewall changes are needed for this offline UI check. This must no
 4. Confirm video, audio, iPhone rotation, connection rejection with a bad PIN, disconnect and reconnect, and clean shutdown. Inspect actual Windows Firewall behavior.
 5. Stop the receiver, remove temporary firewall rules, and record results with **no PINs, keys, recordings, or personal screen content** in public GitHub issues.
 
-The [experimental beta guide](EXPERIMENTAL_AIRPLAY_TEST.md) provides the first testable mirror build. It does **not** bypass the stable-release hold. Do not use personal or confidential content.
+The old experimental beta instructions are historical. Do not run an unsigned mirror receiver; refer to [Security hardening status](SECURITY_HARDENING_STATUS.md).
 
 ## Read-only preflight
 
