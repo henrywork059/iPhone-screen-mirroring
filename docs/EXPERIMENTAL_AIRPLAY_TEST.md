@@ -33,19 +33,11 @@ The embedded SHA-256 of the bundled native UxPlay executable is `23F2393729DC291
 - Asks for explicit confirmation **at every start**, validates Windows Private connection profiles, uses upstream `-pw` without password to show a new random 4-digit PIN each connection.
 - Uploads a short-lived TEST artifact containing the GUI, patched backend, GStreamer runtime files and upstream patched corresponding source with license notices.
 
-## Latest tested Windows package with higher resolution and input pad
-
-[GitHub Actions run #42055582516](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/42055582516) passed and uploaded the `iPhoneMirror-Experimental-AirPlay-TEST` artifact containing the new 1080p/1440p/4K options and **Input pad (ESP32)**. The artifact expires on November 12, 2026. An independently passing [firmware compile](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/42055810140) confirms that the ESP32 HID sketch builds with its pinned Arduino core/library; it **does not confirm Bluetooth compatibility on your physical iPhone**.
-
 ## Higher-quality mirroring profiles (new)
 
 The Windows controller now offers **Compatible 1080p/30**, **Smooth 1080p/60**, **Sharper 1440p/60** (default), and **Ultra 4K/30**. The last two request UxPlay HEVC support (`-h265`) and require matching GStreamer H.265 parser/decoder plugins, which CI checks. A requested resolution/frame rate is advisory; some iPhones transmit less than requested. If a high-quality option fails, select a **1080p** profile and reconnect.
 
-## Experimental external mouse and keyboard
-
-The **Input pad (ESP32)** button in the mirroring-enabled GUI opens an optional USB control-pad interface that sends mouse/keyboard commands through an external ESP32 Bluetooth HID bridge. The firmware source and Arduino setup are in [INPUT_BRIDGE.md](INPUT_BRIDGE.md). The bridge must be flashed, USB-connected to Windows, and paired with your iPhone using AssistiveTouch.
-
-**It does not accept clicks directly on the UxPlay video window** because that video is rendered by a separate process. Bluetooth support needs compatible ESP32 hardware and has not been validated with a physical iPhone; the Windows UI and firmware compilation checks are separate.
+Mouse/keyboard control is not currently implemented. The previously added external hardware prototype has been removed; the Windows mirroring application remains display-only.
 
 ## Limitations and risk
 
