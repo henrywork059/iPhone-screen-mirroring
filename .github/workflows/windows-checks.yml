@@ -31,6 +31,19 @@ jobs:
             }
             Write-Host "Syntax OK: $path"
           }
+      - name: Verify emergency security hold
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $gate = Get-Content src/MirrorControl/BackendSecurityGate.cs -Raw
+          $launcher = Get-Content scripts/Start-Mirroring.ps1 -Raw
+          if ($gate -notmatch 'internal static bool IsBlocked\s*=>\s*true\s*;') {
+            throw 'SECURITY HOLD regression: GUI backend launch gate was removed.'
+          }
+          if ($launcher -notmatch '(?m)^throw ''SECURITY HOLD:') {
+            throw 'SECURITY HOLD regression: PowerShell receiver launcher was unblocked.'
+          }
+          Write-Host 'Emergency security hold remains active. This is not an audit.'
       - name: Build Windows controller
         run: dotnet build src/MirrorControl/MirrorControl.csproj --configuration Release
       # No prebuilt UxPlay binaries, installers, or release artifacts are distributed.
