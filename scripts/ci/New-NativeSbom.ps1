@@ -1,6 +1,6 @@
 #requires -Version 7.0
 # Build-only, deterministic CycloneDX file-level SBOM for staged native code.
-# The component hashes are copied from staged SHA256SUMS; the accompanying
+# Component hashes are computed from the staged native executable files; the
 # MSYS2 package inventory lists the upstream dependency package versions.
 [CmdletBinding()]
 param([Parameter(Mandatory=$true)][string]$NativeRoot)
