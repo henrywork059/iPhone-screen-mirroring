@@ -20,3 +20,13 @@ cc -std=c11 -g -O1 -fno-omit-frame-pointer -fsanitize=address,undefined \
 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
 UBSAN_OPTIONS=halt_on_error=1 \
   "$tmp/mirror_buffer_regression"
+
+# Exercise the real OpenSSL AES-CTR and SHA-512 code, too.
+cc -std=c11 -g -O1 -fno-omit-frame-pointer -ffunction-sections -fdata-sections \
+   -fsanitize=address,undefined -Wall -Wextra -I "$tmp/uxplay/lib" \
+   "$tmp/uxplay/lib/mirror_buffer.c" "$tmp/uxplay/lib/crypto.c" \
+   "$root/tests/native/mirror_buffer_openssl_regression.c" \
+   -Wl,--gc-sections -lcrypto -lm -pthread -o "$tmp/mirror_buffer_openssl_regression"
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
+UBSAN_OPTIONS=halt_on_error=1 \
+  "$tmp/mirror_buffer_openssl_regression"
