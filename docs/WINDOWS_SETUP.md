@@ -1,4 +1,6 @@
-# Windows 11 setup — first prototype
+# Windows 11 setup — first prototype (SECURITY HOLD)
+
+> **DO NOT FOLLOW THESE BUILD/LAUNCH STEPS YET.** UxPlay v1.73.7 is affected by a reported heap buffer overflow ([FDH2/UxPlay#614](https://github.com/FDH2/UxPlay/issues/614)). The release pin below is historical and **not approved for execution**. Both project launchers now refuse to run. See [SECURITY_REVIEW.md](SECURITY_REVIEW.md). These instructions will be revised only after a reviewed patched release is selected.
 
 This guide is for an initial **source-code prototype**, not an installer. You will need Windows 11 64-bit, a connected iPhone, a trusted local network, administrator permission for *installing development dependencies*, and a non-elevated account to run the receiver.
 
@@ -22,7 +24,7 @@ pacman -S --needed git mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake min
 
 These package names and the Bonjour requirement follow [UxPlay's Windows build instructions for v1.73.7](https://github.com/FDH2/UxPlay/blob/v1.73.7/README.md#building-uxplay-on-microsoft-windows-using-msys2-with-the-mingw-64-compiler).
 
-## 2. Fetch a pinned stable UxPlay revision
+## 2. Historic vulnerable pin — DO NOT BUILD OR RUN
 
 Still in **MSYS2 UCRT64**:
 
@@ -33,7 +35,7 @@ git checkout df67c212a433cf6dda3676dd40c097900d24e645
 git rev-parse HEAD
 ~~~
 
-The final command should report `df67c212a433cf6dda3676dd40c097900d24e645`, the published **v1.73.7** release commit (September 4, 2026).
+The final command would report `df67c212a433cf6dda3676dd40c097900d24e645`, the **now-blocked** v1.73.7 release commit (September 4, 2026). Do **not** run this revision. We retain the old steps for traceability.
 
 Build and install:
 
@@ -57,7 +59,7 @@ powershell -NoProfile -File .\scripts\Check-Prerequisites.ps1
 
 If the network is Public, use **Windows Settings → Network & internet → Wi-Fi/Ethernet → [connected network] → Network profile type → Private** only if this is a network you actually trust. Do **not** mark a café, hotel, or guest network Private merely to bypass the check.
 
-## 4. Start the receiver
+## 4. Start the receiver — DISABLED UNTIL SECURITY REVIEW
 
 Choose one route.
 

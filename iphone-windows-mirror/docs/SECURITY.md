@@ -1,10 +1,12 @@
 # Security policy and design goals
 
+> **SECURITY HOLD (2026-11-05)**: UxPlay v1.73.7, used by the original build instructions, contains a reported heap buffer overflow (FDH2/UxPlay#614). Launchers are **disabled** pending review of a patched release. See [full review](../../docs/SECURITY_REVIEW.md).
+
 The project now contains a Windows prototype controller and PowerShell launchers. **None of the code, network behavior, or media path has undergone a complete security audit or physical iPhone/Windows test.**
 
 ## Current prototype controls
 
-- UxPlay v1.73.7 is selected and pinned to a published commit in setup instructions, but not downloaded automatically.
+- UxPlay v1.73.7 remains in the old instructions solely for traceability; it is **not an approved runtime**. The GUI and PowerShell entry points refuse to launch.
 - `-pw` with no password is passed for a new random pairing PIN every connection.
 - A separate visible UxPlay console displays the PIN; the .NET controller does not persist it.
 - Launch is blocked if the physical connected Windows network profiles are not all Private.

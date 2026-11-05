@@ -76,6 +76,8 @@ public sealed class MirrorForm : Form
         _start.BackColor = AccentColor; _start.ForeColor = Color.Black; _start.FlatStyle = FlatStyle.Flat;
         _start.Size = new Size(165, 42);
         _start.Click += async (_, _) => await StartAsync();
+        _start.Enabled = !BackendSecurityGate.IsBlocked;
+        if (BackendSecurityGate.IsBlocked) _start.Text = "Launch blocked";
         _stop.Text = "Stop receiver";
         _stop.BackColor = PanelColor; _stop.ForeColor = Color.White; _stop.FlatStyle = FlatStyle.Flat;
         _stop.Size = new Size(165, 42); _stop.Enabled = false;
@@ -84,7 +86,9 @@ public sealed class MirrorForm : Form
         actions.Controls.Add(_stop);
         root.Controls.Add(actions, 0, 6);
 
-        _status.Text = "Status: Not running";
+        _status.Text = BackendSecurityGate.IsBlocked
+            ? "Status: SECURITY HOLD — see docs/SECURITY_REVIEW.md"
+            : "Status: Not running";
         _status.ForeColor = SecondaryColor;
         _status.Dock = DockStyle.Fill;
         root.Controls.Add(_status, 0, 7);
@@ -122,6 +126,12 @@ public sealed class MirrorForm : Form
 
     private async Task StartAsync()
     {
+        if (BackendSecurityGate.IsBlocked)
+        {
+            SetStatus(BackendSecurityGate.Reason);
+            Append(BackendSecurityGate.Reason);
+            return;
+        }
         if (_starting || _receiver?.IsRunning == true) return;
 
         string executable = _executable.Text.Trim().Trim('"');
@@ -179,7 +189,7 @@ public sealed class MirrorForm : Form
     {
         _receiver?.Stop();
         _stop.Enabled = false;
-        _start.Enabled = true;
+        _start.Enabled = !BackendSecurityGate.IsBlocked;
         SetStatus("Receiver stopped.");
     }
 

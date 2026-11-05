@@ -1,8 +1,11 @@
 # Development roadmap
 
+> **Security hold:** Stop before Windows/iPhone execution. See [SECURITY_REVIEW.md](../../docs/SECURITY_REVIEW.md).
+
 ## Milestone 0 — feasibility
 - [x] Identify UxPlay v1.73.7 stable release, Windows 11 build requirements, and GPL-3.0 license.
-- [x] Pin its release commit in [Windows setup](../../docs/WINDOWS_SETUP.md).
+- [x] Pin its release commit in [Windows setup](../../docs/WINDOWS_SETUP.md) for historical traceability.
+- [ ] Replace blocked v1.73.7 with a reviewed, published patched release and security regression tests.
 - [ ] Reproduce Windows UxPlay build on a physical laptop.
 - [ ] Validate iPhone discovery, video, audio, and PIN entry.
 

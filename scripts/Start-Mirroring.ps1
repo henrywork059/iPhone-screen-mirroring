@@ -14,6 +14,9 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+# Security gate: do not launch a vulnerable or unapproved receiver.
+# This should only be lifted after an audited, pinned, independently tested release.
+throw 'SECURITY HOLD: UxPlay v1.73.7 has a reported heap buffer overflow (FDH2/UxPlay#614). Receiver launch is disabled. See docs/SECURITY_REVIEW.md.'
 if ($env:OS -ne 'Windows_NT') { throw 'This script requires Windows.' }
 if (-not (Test-Path -LiteralPath $UxPlayPath -PathType Leaf)) {
     throw "UxPlay executable not found: $UxPlayPath. Follow docs/WINDOWS_SETUP.md."

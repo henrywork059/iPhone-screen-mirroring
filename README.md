@@ -2,18 +2,24 @@
 
 A local-first iPhone-to-Windows 11 AirPlay mirroring project.
 
+> **SECURITY HOLD (November 5, 2026): Do not run the AirPlay receiver or perform device/network testing yet.** UxPlay v1.73.7 has a reported heap-buffer overflow in `lib/mirror_buffer.c` (upstream [issue #614](https://github.com/FDH2/UxPlay/issues/614)). Both project launch paths are intentionally disabled until a patched backend is independently reviewed and approved. See [security review](docs/SECURITY_REVIEW.md).
+
 > **Prototype source available; Windows/iPhone end-to-end test pending.** This repository does **not** include an AirPlay engine, prebuilt installer, or verified working release.
 
 ## First prototype
 
 - **Controller:** .NET 8 Windows Forms app under [`src/MirrorControl`](src/MirrorControl/).
-- **Receiver:** externally installed [UxPlay](https://github.com/FDH2/UxPlay), pinned to stable **v1.73.7** in the build guide.
+- **Receiver:** upstream [UxPlay](https://github.com/FDH2/UxPlay). Formerly pinned v1.73.7 is **not approved for execution** due to a subsequent heap-overflow report.
 - **Video/audio:** UxPlay + GStreamer opens a separate video window and uses local Windows audio. The controller does not yet embed video.
 - **Pairing:** UxPlay `-pw` without a password requests a **new random 4-digit code on every connection**; its **console** displays the code.
 - **Network guard:** both launchers refuse to start unless all detected connected physical Windows profiles are Private. This is a safety check, **not** a firewall or a security boundary.
 - **No automatic downloads, firewall rules, background services, or telemetry** in the controller or launch script.
 
-## Start here (Windows 11)
+## Windows setup (currently blocked)
+
+**STOP:** The following steps are historical prototype instructions and **must not be performed until the security hold is cleared**. The GUI launch button and PowerShell startup script intentionally refuse to start UxPlay.
+
+### After a patched release is approved
 
 1. Follow [Windows setup](docs/WINDOWS_SETUP.md) to install dependencies and compile upstream UxPlay. Only the UxPlay build needs MSYS2; the controller needs .NET 8.
 2. Connect iPhone and laptop to the same **trusted** Wi-Fi or LAN and use Windows' **Private** network profile. Review any existing inbound rules for UxPlay.
@@ -36,7 +42,8 @@ If the UxPlay executable is in another location, change the GUI's path field or 
 
 ## Project documentation
 
-- [Windows setup and build](docs/WINDOWS_SETUP.md)
+- [Windows setup and build — blocked](docs/WINDOWS_SETUP.md)
+- [Security review and unblock criteria](docs/SECURITY_REVIEW.md)
 - [Architecture decisions](docs/ARCHITECTURE_DECISIONS.md)
 - [Manual test plan](tests/MANUAL_TEST_PLAN.md)
 - [Existing design docs](iphone-windows-mirror/docs/ARCHITECTURE.md)
