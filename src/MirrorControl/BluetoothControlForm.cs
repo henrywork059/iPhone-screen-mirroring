@@ -292,11 +292,15 @@ internal sealed class BluetoothControlForm : Form
         if (mouse.Success) _mouseSubscribers = int.Parse(mouse.Groups[1].Value);
 
         // BleHid 'host' outputs one numbered subscribed host per line.
-        var hostMatch = Regex.Match(line, @"^\s*(\d{1,2})\.\s+(.+)$");
+        var hostMatch = Regex.Match(line, @"^\s*\*?\s*(\d{1,2})\.\s+(.+)$");
         if (hostMatch.Success && int.TryParse(hostMatch.Groups[1].Value, out int index)
             && index is >= 1 and <= 32)
         {
             var display = hostMatch.Groups[2].Value.Trim();
+            // The CLI may append CAPS LOCK / NUM LOCK warnings after the
+            // bracketed Bluetooth address. Those aren't part of the host name.
+            int addressEnd = display.LastIndexOf(']');
+            if (addressEnd >= 0) display = display[..(addressEnd + 1)];
             if (!_hosts.Items.Cast<HostChoice>().Any(x => x.Number == index && x.Display == display))
                 _hosts.Items.Add(new HostChoice(index, display));
             if (_hosts.SelectedIndex == -1 && _hosts.Items.Count > 0) _hosts.SelectedIndex = 0;
