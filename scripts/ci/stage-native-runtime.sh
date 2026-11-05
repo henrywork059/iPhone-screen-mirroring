@@ -4,6 +4,28 @@
 set -euo pipefail
 stage="${1:?stage directory required}"
 [[ -s "$stage/bin/uxplay.exe" ]] || { echo "Missing staged UxPlay" >&2; exit 1; }
+# Version lock for reviewed primary native media and crypto dependencies.
+# Rolling MSYS2 repositories may change at any time: STOP rather than
+# silently accept a new library until its advisories and license are reviewed.
+while read -r package expected; do
+  [[ -z "$package" || "$package" == \#* ]] && continue
+  actual="$(pacman -Q "$package" | awk '{print $2}')"
+  if [[ "$actual" != "$expected" ]]; then
+    echo "SECURITY HOLD: $package changed from reviewed $expected to $actual" >&2
+    exit 1
+  fi
+done <<'PINNED_MAIN_DEPENDENCIES'
+mingw-w64-ucrt-x86_64-gstreamer 1.28.8-1
+mingw-w64-ucrt-x86_64-gst-plugins-base 1.28.8-1
+mingw-w64-ucrt-x86_64-gst-plugins-good 1.28.8-1
+mingw-w64-ucrt-x86_64-gst-plugins-bad 1.28.8-3
+mingw-w64-ucrt-x86_64-gst-libav 1.28.8-1
+mingw-w64-ucrt-x86_64-ffmpeg 9.0.2-2
+mingw-w64-ucrt-x86_64-openssl 3.6.5-1
+mingw-w64-ucrt-x86_64-libplist 2.7.0-4
+mingw-w64-ucrt-x86_64-json-glib 1.10.8-2
+PINNED_MAIN_DEPENDENCIES
+echo 'Reviewed primary MSYS2 dependency versions match exact pins.'
 # GStreamer releases before 1.28.8 contain multiple October 2026
 # security advisories; fail the build rather than bundle an older decoder.
 gst_version="$(pkg-config --modversion gstreamer-1.0)"
