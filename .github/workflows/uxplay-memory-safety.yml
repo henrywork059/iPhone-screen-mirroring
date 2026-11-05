@@ -3,7 +3,13 @@ name: UxPlay C memory-safety regression (offline)
 on:
   push:
     branches: [main]
+    paths:
+      - 'tests/native/**'
+      - 'patches/uxplay-mirror-short-frame.patch'
+      - 'scripts/ci/test-uxplay-mirror-*.sh'
+      - '.github/workflows/uxplay-memory-safety.yml'
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

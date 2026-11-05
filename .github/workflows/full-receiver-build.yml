@@ -3,7 +3,13 @@ name: Windows complete receiver build (blocked, no execution)
 on:
   push:
     branches: [main]
+    paths:
+      - 'scripts/ci/build-full-receiver-windows.sh'
+      - 'patches/uxplay-experimental-mirror-short-frame.patch'
+      - 'tests/native/**'
+      - '.github/workflows/full-receiver-build.yml'
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

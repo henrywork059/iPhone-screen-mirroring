@@ -3,7 +3,13 @@ name: Windows source checks
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/MirrorControl/**'
+      - 'scripts/*.ps1'
+      - 'config/**'
+      - '.github/workflows/windows-checks.yml'
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

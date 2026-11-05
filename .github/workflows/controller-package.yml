@@ -3,7 +3,12 @@ name: Windows offline controller packaging (no receiver)
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/MirrorControl/**'
+      - 'config/**'
+      - '.github/workflows/controller-package.yml'
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
