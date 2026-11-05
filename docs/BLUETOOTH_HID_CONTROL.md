@@ -40,6 +40,19 @@ Capturing mouse/keyboard does not automatically map each mirrored pixel to an
 iPhone touch coordinate. If the pointer is displaced, move it on the iPhone,
 or use the arrow buttons to calibrate before capture.
 
+## If the iPhone is paired but there is no input
+
+Use **Refresh paired hosts** and inspect the log. The CLI must report both
+`keyboard subs` and `mouse subs` as nonzero, and **Use selected iPhone**
+must confirm the intended target before our app sends input.
+
+If the earlier standalone BleHid CLI was open at the same time, type `quit`
+there and stop/restart the new Bluetooth control window. If pairing persisted
+but report subscriptions are missing after a restart, the BleHid upstream
+project documents possible host GATT cache/reconnect limitations. You may
+need to disconnect/reconnect Bluetooth or forget/re-pair your own PC in
+iPhone Bluetooth settings. Do not pair to unrelated devices.
+
 ## No iPhone Developer Mode needed
 
 Bluetooth HID pairing uses the standard iPhone external keyboard and
