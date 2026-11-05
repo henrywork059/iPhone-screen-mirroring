@@ -103,21 +103,6 @@ public sealed class MirrorForm : Form
         _stop.Click += (_, _) => StopReceiver();
         actions.Controls.Add(_start);
         actions.Controls.Add(_stop);
-        var inputPad = new Button
-        {
-            Text = "Input pad (ESP32)",
-            BackColor = PanelColor,
-            ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat,
-            Size = new Size(165, 42),
-            Enabled = BackendSecurityGate.IsExperimental
-        };
-        inputPad.Click += (_, _) =>
-        {
-            using var pad = new HidControlForm();
-            pad.ShowDialog(this);
-        };
-        actions.Controls.Add(inputPad);
         root.Controls.Add(actions, 0, 8);
 
         _status.Text = BackendSecurityGate.IsBlocked
