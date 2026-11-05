@@ -41,3 +41,7 @@ compile_commands.json
 # OS files
 Thumbs.db
 .DS_Store
+
+# CI-generated experimental receiver hash (never committed)
+src/MirrorControl/ExperimentalBuildIdentity.g.cs
+_review_stage/

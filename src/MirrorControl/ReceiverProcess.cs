@@ -22,8 +22,7 @@ internal sealed class ReceiverProcess : IDisposable
 
     internal void Start(string executable, string receiverName)
     {
-        if (BackendSecurityGate.IsBlocked)
-            throw new InvalidOperationException(BackendSecurityGate.Reason);
+        ReceiverIdentity.Validate(executable);
         if (IsRunning)
             throw new InvalidOperationException("The receiver is already running.");
         if (!File.Exists(executable) ||
@@ -57,6 +56,8 @@ internal sealed class ReceiverProcess : IDisposable
         })
             info.ArgumentList.Add(arg);
 
+        // The receiver runs from a fully packaged, checksum-bound runtime only.
+        // Windows must load DLLs from the same private directory.
         // Do not inherit arbitrary caller PATH entries for native DLL resolution.
         string windowsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         info.Environment["PATH"] = string.Join(Path.PathSeparator, new[]

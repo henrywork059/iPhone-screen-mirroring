@@ -7,6 +7,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Disabled by default, including normal Release builds. Only CI's explicit
+         opt-in beta workflow may set this and provide a generated pinned hash. -->
+    <EnableExperimentalReceiver Condition="'$(EnableExperimentalReceiver)' == ''">false</EnableExperimentalReceiver>
+    <DefineConstants Condition="'$(EnableExperimentalReceiver)' == 'true'">$(DefineConstants);EXPERIMENTAL_RECEIVER</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\..\config\uxplayrc" Link="config\uxplayrc" CopyToOutputDirectory="PreserveNewest" />

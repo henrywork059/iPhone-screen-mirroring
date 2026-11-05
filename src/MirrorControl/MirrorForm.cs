@@ -58,7 +58,9 @@ public sealed class MirrorForm : Form
         }, 0, 0);
         root.Controls.Add(new Label
         {
-            Text = "SECURITY HOLD — receiver launch disabled; offline checks only",
+            Text = BackendSecurityGate.IsExperimental
+                ? "EXPERIMENTAL AIRPLAY TEST — not security audited"
+                : "SECURITY HOLD — receiver launch disabled; offline checks only",
             ForeColor = SecondaryColor, AutoSize = false, Dock = DockStyle.Fill
         }, 0, 1);
         root.Controls.Add(MakeLabel("Path to uxplay.exe"), 0, 2);
@@ -66,6 +68,7 @@ public sealed class MirrorForm : Form
         _executable.Text = File.Exists(bundledReceiver) ? bundledReceiver :
             @"C:\msys64\ucrt64\bin\uxplay.exe";
         StyleTextBox(_executable);
+        _executable.ReadOnly = BackendSecurityGate.IsExperimental;
         root.Controls.Add(_executable, 0, 3);
 
         root.Controls.Add(MakeLabel("Receiver name shown on iPhone"), 0, 4);
@@ -80,6 +83,7 @@ public sealed class MirrorForm : Form
         _start.Click += async (_, _) => await StartAsync();
         _start.Enabled = !BackendSecurityGate.IsBlocked;
         if (BackendSecurityGate.IsBlocked) _start.Text = "Launch blocked";
+        else _start.Text = "Start test receiver";
         _stop.Text = "Stop receiver";
         _stop.BackColor = PanelColor; _stop.ForeColor = Color.White; _stop.FlatStyle = FlatStyle.Flat;
         _stop.Size = new Size(165, 42); _stop.Enabled = false;
@@ -90,7 +94,7 @@ public sealed class MirrorForm : Form
 
         _status.Text = BackendSecurityGate.IsBlocked
             ? "Status: SECURITY HOLD — see docs/SECURITY_REVIEW.md"
-            : "Status: Not running";
+            : "Status: Experimental receiver not running";
         _status.ForeColor = SecondaryColor;
         _status.Dock = DockStyle.Fill;
         root.Controls.Add(_status, 0, 7);
@@ -136,11 +140,36 @@ public sealed class MirrorForm : Form
         }
         if (_starting || _receiver?.IsRunning == true) return;
 
+        if (BackendSecurityGate.IsExperimental)
+        {
+            DialogResult consent = MessageBox.Show(this,
+                "This is an experimental AirPlay receiver. Its native network and media parsers " +
+                "have NOT received a complete security audit.\n\n" +
+                "Use only a trusted, isolated Private network with no unrelated devices. " +
+                "Mirror non-sensitive content and keep your firewall's Public profile blocked.\n\n" +
+                "Start an AirPlay network listener on this Windows PC?",
+                "Experimental mirroring: confirm network test",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2);
+            if (consent != DialogResult.Yes)
+            {
+                SetStatus("Experimental receiver start cancelled.");
+                return;
+            }
+        }
+
         string executable = _executable.Text.Trim().Trim('"');
         string name = _name.Text.Trim();
         if (!Regex.IsMatch(name, @"^[A-Za-z0-9][A-Za-z0-9 _.()-]{0,39}$"))
         {
             SetStatus("Receiver name must be 1–40 basic Latin characters.");
+            return;
+        }
+        try { ReceiverIdentity.Validate(executable); }
+        catch (Exception ex)
+        {
+            SetStatus(ex.Message);
             return;
         }
         if (!File.Exists(executable))
@@ -167,7 +196,7 @@ public sealed class MirrorForm : Form
             _receiver.Output += line => Append(line);
             _receiver.Exited += () => SafeUi(() =>
             {
-                _start.Enabled = true;
+                _start.Enabled = !BackendSecurityGate.IsBlocked;
                 _stop.Enabled = false;
                 SetStatus("Receiver stopped.");
             });
@@ -183,7 +212,7 @@ public sealed class MirrorForm : Form
         finally
         {
             _starting = false;
-            _start.Enabled = _receiver?.IsRunning != true;
+            _start.Enabled = !BackendSecurityGate.IsBlocked && _receiver?.IsRunning != true;
         }
     }
 
