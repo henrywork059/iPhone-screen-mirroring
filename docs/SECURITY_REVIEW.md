@@ -17,13 +17,19 @@ The earlier security fixes in UxPlay 1.73.7 (GHSA-479c-ww7g-wgp8, CVE-2025-60458
 
 The development-branch patch contains `for (int i = 0; i < mirror_buffer->nextDecryptCount; i++)` with an early return when `inputLen` is shorter. This change warrants a dedicated regression test for frames shorter than the residual keystream. A closed upstream issue does **not** establish that the patch has been audited and tested on Windows.
 
+## Dedicated experimental AirPlay test build
+
+As of November 5, 2026, there is a **separately compiled beta** that sets `EnableExperimentalReceiver=true`, embeds the SHA-256 of the pinned patched UxPlay executable, requires user confirmation at each start, and refuses non-Private connected Windows network profiles. The default GUI and the PowerShell launcher remain blocked. See the [experimental beta guide](EXPERIMENTAL_AIRPLAY_TEST.md).
+
+This beta can open a real network listener and display streamed video in a separate window. **It is not independently audited or approved for normal use**, and the complete AirPlay decoder, H.264 dependencies and experimental mDNS code remain potential attack surfaces. The user should only test on a controlled trusted isolated LAN with non-sensitive content, and should not bypass Windows security warnings.
+
 ## Our controller's security posture
 
 **Positive controls implemented:** source-only .NET/PowerShell launchers, random PIN required on each connection, refusal to start on non-Private physical network profiles, no automatic downloads or firewall rules, no telemetry in our code.
 
 **Limitations:** a Private profile is a user-configured label, not enforced network isolation. Virtual interfaces and existing firewall rules can still expose the receiver. The project cannot attest that a user-selected `uxplay.exe` is genuine, patched, or built reproducibly. It also does not validate all third-party native DLLs or run protocol fuzzing. Compilation and syntax checks are **not** security tests.
 
-**Mitigation now:** the GUI Start button and its Start handler, and the PowerShell launch script, are disabled. Historical UxPlay build instructions are labeled not approved.
+**Mitigation now:** the default GUI Start button, its Start handler, and the PowerShell launch script are disabled. The separate explicitly opt-in beta allows launch with per-start consent, a pinned binary fingerprint and network profile preflight. Historical UxPlay build instructions are labeled not approved.
 
 ## Criteria before lifting the block
 

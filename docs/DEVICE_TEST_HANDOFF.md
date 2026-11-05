@@ -1,6 +1,6 @@
-# Device-test handoff — NOT CLEARED
+# Device-test handoff — experimental mirroring test possible
 
-> **Not yet authorized to conduct the test.** The upstream experimental receiver has only completed build and targeted offline regression testing. The desktop application and terminal launcher remain intentionally disabled. This document defines the handoff boundary for a future supervised test, not steps to perform now.
+> **Opt-in beta now available:** the separate [experimental AirPlay test build](EXPERIMENTAL_AIRPLAY_TEST.md) contains a patched UxPlay receiver and a controller that can start it. Real iPhone compatibility and full network security remain unverified. Normal builds remain disabled. Test only if you accept the documented risk and can use an isolated trusted network; the package is not for normal use.
 
 ## Remote development already completed
 
@@ -10,7 +10,7 @@
 - **Full Windows executable build** from pinned experimental UxPlay source at commit `7aaad6222c2e136723e6e3d25c3be784260c577d` with local short-frame correction.
 - Dependency and DLL import information recorded in [DEPENDENCY_INVENTORY.md](DEPENDENCY_INVENTORY.md).
 
-## Still required before any live test
+## Outstanding checks before a stable release
 
 - Independent review of native AirPlay request parsers and the new experimental mDNS implementation, including pre-authentication paths.
 - Verification that dynamic GStreamer plugins and transitive DLLs come from trusted packages; record a complete manifest.
@@ -32,7 +32,7 @@ No iPhone or firewall changes are needed for this offline UI check. This must no
 4. Confirm video, audio, iPhone rotation, connection rejection with a bad PIN, disconnect and reconnect, and clean shutdown. Inspect actual Windows Firewall behavior.
 5. Stop the receiver, remove temporary firewall rules, and record results with **no PINs, keys, recordings, or personal screen content** in public GitHub issues.
 
-These are **not** instructions to bypass the existing security hold. I will identify the first step requiring a physical device once the test build is ready.
+The [experimental beta guide](EXPERIMENTAL_AIRPLAY_TEST.md) provides the first testable mirror build. It does **not** bypass the stable-release hold. Do not use personal or confidential content.
 
 ## Read-only preflight
 

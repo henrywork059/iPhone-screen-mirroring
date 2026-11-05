@@ -2,15 +2,21 @@
 
 A local-first iPhone-to-Windows 11 AirPlay mirroring project.
 
-> **SECURITY HOLD (November 5, 2026): Do not run the AirPlay receiver or perform device/network testing yet.** UxPlay v1.73.7 has a reported heap-buffer overflow in `lib/mirror_buffer.c` (upstream [issue #614](https://github.com/FDH2/UxPlay/issues/614)). Both project launch paths are intentionally disabled until a patched backend is independently reviewed and approved. See [security review](docs/SECURITY_REVIEW.md).
-
-> **Prototype source available; Windows/iPhone end-to-end test pending.** This repository does **not** include an AirPlay engine, prebuilt installer, or verified working release.
+> **EXPERIMENTAL TEST BUILD AVAILABLE (2026-11-05):** An explicitly opt-in Windows ZIP now includes a patched UxPlay receiver and a controller that can start it for actual iPhone AirPlay mirroring. [Download from the successful GitHub Actions build](https://github.com/henrywork059/iPhone-screen-mirroring/actions/workflows/experimental-airplay-beta.yml). Follow [experimental setup and risk warnings](docs/EXPERIMENTAL_AIRPLAY_TEST.md). **Real-device functionality is not yet confirmed.**
+>
+> **STABLE RELEASE SECURITY HOLD:** Default application builds and PowerShell startup remain disabled. The old UxPlay v1.73.7 release has a reported heap-buffer overflow ([issue #614](https://github.com/FDH2/UxPlay/issues/614)). The opt-in beta uses a separately pinned 1.74 experimental revision plus our regression-tested correction, but the complete AirPlay/mDNS network parser remains **unaudited**. No stable installer is available. Do not use for sensitive content or on an untrusted network.
 
 ## Offline Windows UI preview (available for user testing)
 
 The **UI-only** self-contained Windows 11 preview is available as a short-lived GitHub Actions artifact: [successful Windows preview run](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/41978061900). Download the `iPhoneMirror-Offline-UI-Preview` artifact and extract the contained `offline-controller.zip`.
 
 It **does not contain UxPlay**, cannot mirror an iPhone, and will **not open an AirPlay listener**. Confirm that the window opens and clearly shows the disabled **Launch blocked** control. See [safe UI test instructions](docs/OFFLINE_CONTROLLER_PACKAGE.md). Do not bypass Windows security warnings for unsigned binaries.
+
+## Actual iPhone mirroring: controlled test build
+
+**Use [the experimental AirPlay test guide](docs/EXPERIMENTAL_AIRPLAY_TEST.md), not the old stable installation instructions.** Download the explicitly named `iPhoneMirror-Experimental-AirPlay-TEST` artifact from the [beta workflow](https://github.com/henrywork059/iPhone-screen-mirroring/actions/workflows/experimental-airplay-beta.yml), extract both ZIP layers, then run `MirrorControl.exe` as a standard user on an isolated trusted Private network. Confirm the experiment warning and choose the receiver on your iPhone under Control Center → Screen Mirroring. The PIN appears in UxPlay's separate console, and video appears in UxPlay/GStreamer's separate window.
+
+This **can open listening network ports**. No full security audit, real iPhone acceptance test or signed installer exists. **Do not bypass SmartScreen or antivirus warnings.** The default controller remains locked.
 
 ## Current validation results (2026-11-05)
 
@@ -19,7 +25,7 @@ It **does not contain UxPlay**, cannot mirror an iPhone, and will **not open an 
 - **PASSED:** self-contained WinForms GUI packaging inspection.
 - **PASSED:** unpublished combined bundle inspection with 241 GStreamer plugins, 208 runtime DLLs and SHA-256 inventories; approximately 166 MB ZIP.
 - **NOT DONE:** real-device screen mirroring, native runtime behavior on a clean Windows laptop, firewall isolation, complete security review and signed installer.
-- **SECURITY HOLD ACTIVE:** no usable receiver release or downloadable beta is available.
+- **DEFAULT SECURITY HOLD ACTIVE:** a dedicated opt-in experimental mirroring test bundle is available, but there is no approved stable release.
 
 See [full Windows build](docs/FULL_RECEIVER_BUILD.md), [unpublished bundle inspection](docs/PRETEST_BUNDLE.md), [dependency inventory](docs/DEPENDENCY_INVENTORY.md), and the [device-test handoff](docs/DEVICE_TEST_HANDOFF.md). The next user-required action is physical test validation **only after** a reviewed test package is approved; do not execute current experimental binaries.
 
@@ -31,7 +37,7 @@ See [full Windows build](docs/FULL_RECEIVER_BUILD.md), [unpublished bundle inspe
 - **Receiver:** upstream [UxPlay](https://github.com/FDH2/UxPlay). Formerly pinned v1.73.7 is **not approved for execution** due to a subsequent heap-overflow report.
 - **Video/audio:** UxPlay + GStreamer opens a separate video window and uses local Windows audio. The controller does not yet embed video.
 - **Pairing:** UxPlay `-pw` without a password requests a **new random 4-digit code on every connection**; its **console** displays the code.
-- **Network guard:** both launchers refuse to start unless all detected connected physical Windows profiles are Private. This is a safety check, **not** a firewall or a security boundary.
+- **Network guard:** experimental GUI requires connected physical and virtual network profiles to be Private; the default PowerShell launcher remains blocked. This is a safety check, **not** a firewall or a security boundary.
 - **No automatic downloads, firewall rules, background services, or telemetry** in the controller or launch script.
 
 ## Windows setup (currently blocked)
