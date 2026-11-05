@@ -109,6 +109,7 @@ jobs:
           }
           $receiver = Resolve-Path _beta/native/bin/uxplay.exe
           $sha = (Get-FileHash -LiteralPath $receiver -Algorithm SHA256).Hash
+          $manifestHash = (Get-FileHash _beta/native/SHA256SUMS.txt -Algorithm SHA256).Hash
           $code = @"
           #if !EXPERIMENTAL_RECEIVER
           #error This package must compile with EXPERIMENTAL_RECEIVER enabled
@@ -117,6 +118,7 @@ jobs:
           internal static class ExperimentalBuildIdentity
           {
               internal const string UxPlaySha256 = "$sha";
+              internal const string NativeManifestSha256 = "$manifestHash";
           }
           "@
           $code | Set-Content src/MirrorControl/ExperimentalBuildIdentity.g.cs -Encoding utf8
