@@ -4,6 +4,14 @@
 set -euo pipefail
 stage="${1:?stage directory required}"
 [[ -s "$stage/bin/uxplay.exe" ]] || { echo "Missing staged UxPlay" >&2; exit 1; }
+# GStreamer releases before 1.28.8 contain multiple October 2026
+# security advisories; fail the build rather than bundle an older decoder.
+gst_version="$(pkg-config --modversion gstreamer-1.0)"
+oldest="$(printf '%s\n' '1.28.8' "$gst_version" | sort -V | head -n 1)"
+[[ "$oldest" == '1.28.8' ]] || {
+  echo "GStreamer $gst_version is below required security floor 1.28.8" >&2; exit 1;
+}
+echo "GStreamer minimum security version verified: $gst_version"
 mkdir -p "$stage/lib/gstreamer-1.0" "$stage/libexec/gstreamer-1.0"
 if [[ ! -d /ucrt64/lib/gstreamer-1.0 ]]; then echo "GStreamer plugin directory missing" >&2; exit 1; fi
 # Only bundle plugin providers needed for mirroring H.264/H.265 and AAC/ALAC.
