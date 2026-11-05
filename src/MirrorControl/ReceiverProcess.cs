@@ -37,9 +37,9 @@ internal sealed class ReceiverProcess : IDisposable
         {
             WorkingDirectory = directory,
             UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true
+            RedirectStandardOutput = false,
+            RedirectStandardError = false,
+            CreateNoWindow = false
         };
 
         // An explicit, empty -rc file prevents unknown user-level uxplayrc options.
@@ -62,8 +62,6 @@ internal sealed class ReceiverProcess : IDisposable
             info.Environment["GST_PLUGIN_PATH_1_0"] = plugins;
 
         var process = new Process { StartInfo = info, EnableRaisingEvents = true };
-        process.OutputDataReceived += (_, e) => { if (e.Data is not null) Output?.Invoke(e.Data); };
-        process.ErrorDataReceived += (_, e) => { if (e.Data is not null) Output?.Invoke(e.Data); };
         process.Exited += (_, _) => Exited?.Invoke();
         if (!process.Start())
         {
@@ -71,8 +69,9 @@ internal sealed class ReceiverProcess : IDisposable
             throw new InvalidOperationException("UxPlay did not start.");
         }
         _process = process;
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
+        // A console is required: upstream UxPlay may buffer PIN output when redirected.
+        // Keeping a visible console ensures the random PIN is displayed immediately.
+        Output?.Invoke("UxPlay started in its own console; read the PIN there.");
     }
 
     internal void Stop()
