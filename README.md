@@ -22,6 +22,27 @@ This **can open listening network ports**. No full security audit, real iPhone a
 
 - Select **1080p/30, 1080p/60, 1440p/60 (default), or 4K/30** in the controller before starting a mirror session. HEVC and real-device support are experimental; the iPhone can negotiate a lower resolution or frame rate.
 
+## Experimental Windows Bluetooth HID control (no ESP32)
+
+The mirroring beta includes a separately opt-in **Bluetooth control** window using
+the official **BleHid v0.6.0** CLI. The tested Windows adapter supports the required
+Bluetooth LE peripheral role. The new window can pair to your iPhone, list subscribed
+hosts, explicitly select your iPhone, send limited mouse/keyboard commands, and
+offer full keyboard/mouse capture. While captured, press **Ctrl+Alt+Q** to restore
+local Windows input.
+
+This approach does **not** need an ESP32, new hardware, a Mac or iPhone
+Developer Mode. It uses the iPhone's normal Bluetooth keyboard and AssistiveTouch
+mouse support. **It does not map absolute clicks to AirPlay video pixels**:
+the image remains in a separate window and Bluetooth HID pointer movement is
+relative. iPhone pairing and actual input are still unverified on this specific
+phone. The default/stable app is still blocked, and the Bluetooth controller
+only runs in the explicit experimental build.
+
+See [Windows Bluetooth control setup](docs/BLUETOOTH_HID_CONTROL.md). The
+third-party MIT license is included in the test ZIP, and the CI build pins its
+official release download and executable with SHA-256.
+
 ## Current validation results (2026-11-05)
 
 - **PASSED:** full patched experimental Windows UxPlay source build; no network listener was started.
