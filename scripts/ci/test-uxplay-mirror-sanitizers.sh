@@ -66,3 +66,26 @@ printf 'GET /info HTTP/1.1\r\nHost: local\r\n\r\n' > "$tmp/http_corpus/info"
 printf '\001PTTH/1.0 200 OK\r\nContent-Length: 3\r\n\r\nabc' > "$tmp/http_corpus/ptth"
 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
   "$tmp/http_fuzzer" -runs=50000 -max_len=4096 -timeout=4 "$tmp/http_corpus"
+
+
+# Real native UxPlay mDNS compressed-label parser; no sockets or mDNS threads.
+# Link unused mdnsd service code out with function-section garbage collection.
+for target in mdns_regression mdns_fuzzer; do
+  if [[ "$target" == mdns_regression ]]; then
+    testsource="$root/tests/native/uxplay_mdns_regression.c"
+    extra=""
+  else
+    testsource="$root/tests/native/uxplay_mdns_fuzz.c"
+    extra="-fsanitize=fuzzer"
+  fi
+  clang -std=c11 -D_GNU_SOURCE -g -O1 -fno-omit-frame-pointer \
+    -ffunction-sections -fdata-sections -fsanitize=address,undefined \
+    -I "$tmp/uxplay-http/lib" $extra \
+    "$testsource" -Wl,--gc-sections -pthread -o "$tmp/$target"
+done
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 "$tmp/mdns_regression"
+mkdir -p "$tmp/mdns_corpus"
+printf '\003foo\005local\000' > "$tmp/mdns_corpus/valid"
+printf '\300\000' > "$tmp/mdns_corpus/loop"
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+  "$tmp/mdns_fuzzer" -runs=40000 -max_len=1500 -timeout=4 "$tmp/mdns_corpus"
