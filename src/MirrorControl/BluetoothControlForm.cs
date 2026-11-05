@@ -358,6 +358,5 @@ internal sealed class BluetoothControlForm : Form
             else action();
         }
         catch (InvalidOperationException) { /* closing */ }
-        catch (ObjectDisposedException) { /* closing */ }
     }
 }
