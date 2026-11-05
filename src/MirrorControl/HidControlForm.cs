@@ -16,7 +16,7 @@ internal sealed class HidControlForm : Form
     private readonly ComboBox _ports = new();
     private readonly Button _connect = new();
     private readonly Button _disconnect = new();
-    private readonly Panel _pad = new();
+    private readonly FocusablePad _pad = new();
     private readonly TextBox _typing = new();
     private readonly Label _status = new();
     private SerialPort? _serial;
@@ -78,9 +78,9 @@ internal sealed class HidControlForm : Form
         _pad.BackColor = Color.FromArgb(79, 102, 130);
         _pad.BorderStyle = BorderStyle.FixedSingle;
         _pad.Cursor = Cursors.Cross;
-        _pad.MouseEnter += (_, _) => _previous = null;
+        _pad.MouseEnter += (_, _) => { _previous = null; _pad.Focus(); };
         _pad.MouseLeave += (_, _) => { Release(); _previous = null; };
-        _pad.MouseMove += (_, e) => Move(e.Location);
+        _pad.MouseMove += (_, e) => SendMovement(e.Location);
         _pad.MouseDown += (_, e) => { _previous = e.Location; if (e.Button == MouseButtons.Left) Press(); };
         _pad.MouseUp += (_, e) => { if (e.Button == MouseButtons.Left) Release(); };
         _pad.MouseWheel += (_, e) => Transmit(HidProtocol.Scroll(Math.Clamp(Math.Sign(e.Delta), -1, 1)));
@@ -178,7 +178,7 @@ internal sealed class HidControlForm : Form
         }
     }
 
-    private void Move(Point current)
+    private void SendMovement(Point current)
     {
         if (_previous is not Point last)
         {
@@ -217,6 +217,15 @@ internal sealed class HidControlForm : Form
             _typing.Clear();
         }
         catch (ArgumentException ex) { _status.Text = ex.Message; }
+    }
+
+    private sealed class FocusablePad : Panel
+    {
+        internal FocusablePad()
+        {
+            SetStyle(ControlStyles.Selectable, true);
+            TabStop = true;
+        }
     }
 
     private void Disconnect()
