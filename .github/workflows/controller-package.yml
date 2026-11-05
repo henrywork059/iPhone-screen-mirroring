@@ -37,9 +37,21 @@ jobs:
           if (-not (Test-Path $exe -PathType Leaf)) { throw 'Missing compiled GUI' }
           if (-not (Test-Path $config -PathType Leaf)) { throw 'Missing startup config' }
           if (Test-Path 'offline-controller/uxplay.exe') { throw 'Receiver must not be bundled in offline package' }
+          Set-Content -Path offline-controller/READ-ME-FIRST.txt -Value @(
+            'OFFLINE UI PREVIEW ONLY. No AirPlay receiver or mirroring functionality included.',
+            'The Start Receiver control is intentionally disabled for security.',
+            'Extract ZIP, run MirrorControl.exe, and check the window only.',
+            'Do not adjust Windows Firewall or connect an iPhone for this preview.')
           Compress-Archive -Path offline-controller/* -DestinationPath offline-controller.zip -CompressionLevel Optimal
           $hash = Get-FileHash offline-controller.zip -Algorithm SHA256
           Write-Host ('Offline controller ZIP SHA256: ' + $hash.Hash)
           Write-Host ('Offline controller ZIP bytes: ' + (Get-Item offline-controller.zip).Length)
           Write-Host 'Built and checked. No binary or ZIP is published by this workflow.'
-      # The package is intentionally discarded when the ephemeral runner exits.
+      - name: Upload offline UI-only preview (no receiver)
+        uses: actions/upload-artifact@v4
+        with:
+          name: iPhoneMirror-Offline-UI-Preview
+          path: offline-controller.zip
+          retention-days: 7
+          if-no-files-found: error
+      # This intentionally excludes all UxPlay/GStreamer binaries and cannot mirror an iPhone.
