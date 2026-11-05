@@ -58,6 +58,12 @@ jobs:
           pacman -Q > "$(pwd)/_beta/native/source-notices/MSYS2-installed-package-inventory.txt"
           test -s _beta/native/source-notices/uxplay-patched-corresponding-source.tar.gz
           echo 'Receiver staged with corresponding source; no network listener started.'
+      - name: Emit CycloneDX native component inventory
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File scripts/ci/New-NativeSbom.ps1 -NativeRoot _beta/native
+          if ($LASTEXITCODE -ne 0) { throw 'CycloneDX inventory generation failed' }
+          if (-not (Test-Path _beta/native/native-components.cdx.json)) { throw 'Missing generated SBOM' }
       - name: Verify GStreamer elements and packaged codec plugins
         shell: msys2 {0}
         run: |
