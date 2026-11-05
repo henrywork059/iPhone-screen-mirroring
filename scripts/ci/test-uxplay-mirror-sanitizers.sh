@@ -30,3 +30,12 @@ cc -std=c11 -g -O1 -fno-omit-frame-pointer -ffunction-sections -fdata-sections \
 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
 UBSAN_OPTIONS=halt_on_error=1 \
   "$tmp/mirror_buffer_openssl_regression"
+
+# Exercise the exact packet/codec-size helper compiled into the experimental
+# UxPlay receiver. This is offline deterministic fuzzing, not full protocol fuzz.
+cc -std=c11 -g -O1 -fno-omit-frame-pointer -fsanitize=address,undefined \
+   -Wall -Wextra -Werror "$root/tests/native/mirror_validation_regression.c" \
+   -o "$tmp/mirror_validation_regression"
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
+UBSAN_OPTIONS=halt_on_error=1 \
+  "$tmp/mirror_validation_regression"
