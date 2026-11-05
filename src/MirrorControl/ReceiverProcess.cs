@@ -20,7 +20,7 @@ internal sealed class ReceiverProcess : IDisposable
         }
     }
 
-    internal void Start(string executable, string receiverName)
+    internal void Start(string executable, string receiverName, MirrorQualityPreset quality)
     {
         ReceiverIdentity.Validate(executable);
         if (IsRunning)
@@ -58,6 +58,11 @@ internal sealed class ReceiverProcess : IDisposable
 
         // The receiver runs from a fully packaged, checksum-bound runtime only.
         // Windows must load DLLs from the same private directory.
+        // Explicit quality arguments are supported by UxPlay (-s, -fps, -h265).
+        // They do not force the iPhone to transmit at the requested resolution.
+        foreach (string arg in quality.GetUxPlayOptions())
+            info.ArgumentList.Add(arg);
+
         // Do not inherit arbitrary caller PATH entries for native DLL resolution.
         string windowsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         info.Environment["PATH"] = string.Join(Path.PathSeparator, new[]

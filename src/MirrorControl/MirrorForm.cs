@@ -16,6 +16,7 @@ public sealed class MirrorForm : Form
 
     private readonly TextBox _executable = new();
     private readonly TextBox _name = new();
+    private readonly ComboBox _quality = new();
     private readonly RichTextBox _output = new();
     private readonly Label _status = new();
     private readonly Button _start = new();
@@ -26,8 +27,8 @@ public sealed class MirrorForm : Form
     public MirrorForm()
     {
         Text = "iPhone Mirror | Windows Controller";
-        MinimumSize = new Size(620, 570);
-        Size = new Size(760, 630);
+        MinimumSize = new Size(620, 650);
+        Size = new Size(790, 725);
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = BackgroundColor;
         ForeColor = Color.White;
@@ -37,7 +38,7 @@ public sealed class MirrorForm : Form
         var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill, Padding = new Padding(24), ColumnCount = 1,
-            RowCount = 10, BackColor = BackgroundColor
+            RowCount = 12, BackColor = BackgroundColor
         };
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 43));
@@ -45,6 +46,8 @@ public sealed class MirrorForm : Form
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 43));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -76,6 +79,16 @@ public sealed class MirrorForm : Form
         StyleTextBox(_name);
         root.Controls.Add(_name, 0, 5);
 
+        root.Controls.Add(MakeLabel("Mirror quality (requested, not guaranteed)"), 0, 6);
+        _quality.DropDownStyle = ComboBoxStyle.DropDownList;
+        _quality.Dock = DockStyle.Fill;
+        _quality.BackColor = PanelColor;
+        _quality.ForeColor = Color.White;
+        foreach (MirrorQualityPreset preset in MirrorQualityPreset.Options)
+            _quality.Items.Add(preset);
+        _quality.SelectedIndex = 2; // Prefer higher resolution; 1080p fallback is selectable.
+        root.Controls.Add(_quality, 0, 7);
+
         var actions = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight };
         _start.Text = "Start receiver";
         _start.BackColor = AccentColor; _start.ForeColor = Color.Black; _start.FlatStyle = FlatStyle.Flat;
@@ -90,14 +103,14 @@ public sealed class MirrorForm : Form
         _stop.Click += (_, _) => StopReceiver();
         actions.Controls.Add(_start);
         actions.Controls.Add(_stop);
-        root.Controls.Add(actions, 0, 6);
+        root.Controls.Add(actions, 0, 8);
 
         _status.Text = BackendSecurityGate.IsBlocked
             ? "Status: SECURITY HOLD — see docs/SECURITY_REVIEW.md"
             : "Status: Experimental receiver not running";
         _status.ForeColor = SecondaryColor;
         _status.Dock = DockStyle.Fill;
-        root.Controls.Add(_status, 0, 7);
+        root.Controls.Add(_status, 0, 9);
 
         _output.ReadOnly = true;
         _output.BackColor = PanelColor;
@@ -106,7 +119,7 @@ public sealed class MirrorForm : Form
         _output.BorderStyle = BorderStyle.None;
         _output.Dock = DockStyle.Fill;
         _output.DetectUrls = false;
-        root.Controls.Add(_output, 0, 8);
+        root.Controls.Add(_output, 0, 10);
 
         root.Controls.Add(new Label
         {
@@ -114,7 +127,7 @@ public sealed class MirrorForm : Form
             ForeColor = SecondaryColor,
             Text = "Read each connection PIN in the UxPlay console window. The controller writes no logs to disk. " +
                    "Allow Windows Firewall access on Private networks only."
-        }, 0, 9);
+        }, 0, 11);
     }
 
     private static Label MakeLabel(string text) => new()
@@ -200,7 +213,10 @@ public sealed class MirrorForm : Form
                 _stop.Enabled = false;
                 SetStatus("Receiver stopped.");
             });
-            _receiver.Start(executable, name);
+            MirrorQualityPreset preset = _quality.SelectedItem as MirrorQualityPreset
+                ?? MirrorQualityPreset.Options[1];
+            Append("Requested mirror quality: " + preset.Label + ". The iPhone may transmit at a lower resolution/frame rate.");
+            _receiver.Start(executable, name, preset);
             _stop.Enabled = true;
             SetStatus("Receiver running. Read PIN in console; select '" + name + "' on iPhone.");
         }

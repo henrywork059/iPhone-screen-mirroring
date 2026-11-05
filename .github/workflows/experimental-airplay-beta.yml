@@ -64,7 +64,7 @@ jobs:
           set -euo pipefail
           export GST_PLUGIN_PATH_1_0="$(pwd)/_beta/native/lib/gstreamer-1.0"
           export GST_PLUGIN_SYSTEM_PATH_1_0=''
-          for element in d3d11videosink wasapisink h264parse avdec_h264; do
+          for element in d3d11videosink wasapisink h264parse avdec_h264 h265parse avdec_h265; do
             echo "Checking GStreamer element: $element"
             gst-inspect-1.0 "$element" >/dev/null
           done
