@@ -26,9 +26,9 @@ trusted code signature or complete end-to-end testing is claimed.
   OpenSSL, libplist and JSON dependencies. The build now **fails closed**
   on unreviewed version drift; it is not a complete dependency lock or
   independently verified supply-chain provenance.
-- Corrected the device-test handoff to prohibit historical unsigned beta
-  execution. The normal receiver security hold and unsigned artifact
-  distribution hold are retained.
+- The default receiver and signed-release security holds remain active.
+  A manually requested unsigned ZIP may be downloaded for diagnostic
+  inspection, without overriding Smart App Control or release approval.
 
 **Important limits:** these tests do not fuzz complete paired AirPlay
 sessions, all libplist/audio/crypto handling or all DNS record parsing.
@@ -90,12 +90,14 @@ repository-only workflow. Do not label a build production safe on CI success.
    dependencies are still resolved from a rolling MSYS2 repository; their
    versions are recorded but not fully locked/reproducible.
 
-8. **Unsigned distribution hold:** normal builds keep
+8. **Controlled experimental distribution:** normal builds keep
    `BackendSecurityGate.IsBlocked => true`; the PowerShell launcher is
-   also blocked. The experimental and offline-controller workflows compile
-   and inspect artifacts but **do not upload unsigned executable ZIPs**.
-   Legacy, previously uploaded artifacts may remain downloadable until their
-   retention deadlines; they must not be used for routine installation.
+   also blocked. Automatic CI and offline-controller builds **do not upload
+   unsigned executable ZIPs**. The experimental workflow can upload an
+   **unsigned, explicitly acknowledged manual-only ZIP** retained for
+   three days for inspection or limited testing. This is not an approved
+   release or exception to Smart App Control. Do not bypass Windows
+   warnings or use an unsigned prototype for routine installation.
 
 9. **Scope reduction:** no BLE HID, ESP32, touch injection, mouse/keyboard
    capture, driver installation, service autostart, privileged installer or
@@ -132,7 +134,7 @@ repository-only workflow. Do not label a build production safe on CI success.
 
 - [Offline UxPlay sanitizer workflow](../.github/workflows/uxplay-memory-safety.yml)
 - [Coverage-guided bounds fuzzer](../.github/workflows/uxplay-security-fuzz.yml)
-- [Native CI, no download artifact](../.github/workflows/experimental-airplay-beta.yml)
+- [Native CI, manual-only unsigned diagnostic artifact](../.github/workflows/experimental-airplay-beta.yml)
 - [Native staged runtime dependency inspection](../.github/workflows/pretest-bundle.yml)
 - [Security hold and vulnerability reporting](../SECURITY.md)
 - [Microsoft Smart App Control signing guide](https://learn.microsoft.com/en-us/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control)

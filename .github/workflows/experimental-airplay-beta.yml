@@ -1,4 +1,4 @@
-name: AirPlay native security build (unpublished, no listener)
+name: AirPlay mirroring-only experimental build (manual ZIP opt-in)
 
 on:
   push:
@@ -12,6 +12,12 @@ on:
       - 'tests/native/**'
       - '.github/workflows/experimental-airplay-beta.yml'
   workflow_dispatch:
+    inputs:
+      acknowledge_unsigned:
+        description: "I understand this is unsigned, unapproved for routine use, and Windows Smart App Control may block it; I will not disable protection"
+        type: boolean
+        required: true
+        default: false
 
 permissions:
   contents: read
@@ -21,6 +27,15 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 35
     steps:
+      - name: Require explicit acknowledgement for manually requested unsigned ZIP
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        shell: pwsh
+        env:
+          ACKNOWLEDGE_UNSIGNED: ${{ inputs.acknowledge_unsigned }}
+        run: |
+          if ($env:ACKNOWLEDGE_UNSIGNED -ne 'true') {
+            throw 'Unsigned experimental download requires explicit acknowledgement. Do not disable Smart App Control.'
+          }
       - name: Checkout project source
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - name: Set up .NET 8
@@ -166,15 +181,23 @@ jobs:
           Write-Host ('Experimental test ZIP bytes: ' + $zip.Length)
           Write-Host ('Experimental test ZIP SHA-256: ' + $digest)
           Write-Host ('Pinned receiver SHA-256 embedded in GUI: ' + $sha)
-      # SECURITY HOLD: no public artifact upload until signed release clearance.
-      # The compiled candidate remains ephemeral on the GitHub runner.
-      # A trusted Authenticode identity, a completed independent security
-      # review, and controlled real-device validation are still required.
-      - name: Enforce unsigned distribution hold
+      # Normal push builds do not publish executables. Only an explicit
+      # workflow_dispatch with checked acknowledgement may upload this
+      # short-lived UNSIGNED diagnostic package. This is NOT a trusted release.
+      - name: Verify normal CI keeps the unsigned publishing hold
+        if: ${{ github.event_name != 'workflow_dispatch' }}
         shell: pwsh
         run: |
-          if (Test-Path _beta/iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY.zip) {
-            Write-Host 'SECURITY HOLD: candidate compiled, tests passed. No unsigned artifact is uploaded.'
-          } else {
-            throw 'Expected candidate for offline inspection is missing.'
+          if (-not (Test-Path _beta/iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY.zip)) {
+            throw 'The experimental package is missing.'
           }
+          Write-Host 'Normal CI does not publish unsigned executable packages.'
+      - name: Upload UNSIGNED experimental test ZIP (manual opt-in only)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.acknowledge_unsigned }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: iPhoneMirror-MIRROR-ONLY-UNSIGNED-EXPERIMENTAL
+          path: _beta/iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY.zip
+          retention-days: 3
+          if-no-files-found: error
+          compression-level: 0

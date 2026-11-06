@@ -2,13 +2,15 @@
 
 A local-first iPhone-to-Windows 11 AirPlay mirroring project.
 
-> **SECURITY HOLD — NO APPROVED WINDOWS DOWNLOAD (2026-11-06):**
-> The native mirroring-only prototype is being hardened. GitHub Actions
-> compiles it and runs offline security tests, but no new unsigned executable
-> artifacts are uploaded. Earlier experiment ZIPs may still exist in old
-> Actions runs; they are **not approved for installation**, especially with
-> Smart App Control enabled. Do not bypass Windows Security.
-> [Current hardening evidence and release gates](docs/SECURITY_HARDENING_STATUS.md).
+> **SECURITY HOLD — NO APPROVED WINDOWS RELEASE (2026-11-06):**
+> You can manually request an **unsigned experimental mirroring-only ZIP**
+> from [GitHub Actions](.github/workflows/experimental-airplay-beta.yml)
+> using **Run workflow** and checking the acknowledgement box.
+> The file is for diagnostic inspection and limited opt-in testing, **not an
+> approved or signed release**. Smart App Control may block it; never
+> disable or bypass Windows security protections to run it.
+> Routine CI and the offline-controller workflow do not publish unsigned ZIPs.
+> [Security status](docs/SECURITY_HARDENING_STATUS.md).
 >
 > **STABLE RELEASE SECURITY HOLD:** Default application builds and PowerShell startup remain disabled. The old UxPlay v1.73.7 release has a reported heap-buffer overflow ([issue #614](https://github.com/FDH2/UxPlay/issues/614)). The opt-in beta uses a separately pinned 1.74 experimental revision plus our regression-tested correction, but the complete AirPlay/mDNS network parser remains **unaudited**. No stable installer is available. Do not use for sensitive content or on an untrusted network.
 
@@ -38,9 +40,9 @@ configuration, read [Signed Windows release instructions](docs/SIGNED_WINDOWS_RE
 ## Actual iPhone mirroring: security hold
 
 The project implements a local Windows AirPlay mirroring receiver, but it
-is **not approved for routine use or installation**. CI builds the patched
-UxPlay backend for controlled security verification only, without making
-the unsigned package available for download. Smart App Control must remain ON.
+is **not approved for routine use or installation**. A manually acknowledged
+GitHub Actions run can provide the unsigned diagnostic ZIP for inspection;
+ordinary CI remains unpublished. Smart App Control must remain ON.
 A trusted code-signing identity, independent audit and real-device/isolated
 network validation are pending. See [the security status](docs/SECURITY_HARDENING_STATUS.md).
 
@@ -76,7 +78,7 @@ security hold.
   from 241; native DLL count reduced from 208 to 125.
 - **IMPLEMENTED:** Private/Public Windows Firewall default inbound checks,
   native dependency SHA-256 inventory verification, pinned GitHub Actions,
-  a file-level CycloneDX SBOM and a hold on unsigned artifact uploads.
+  a file-level CycloneDX SBOM and a hold on **automatic** unsigned artifact uploads.
 - **NOT COMPLETED:** full network protocol fuzzing, independent security
   assessment, trusted signing, real iPhone tests, complete runtime isolation,
   dependency reproducibility and release approval.

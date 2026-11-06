@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-**No version is currently approved for installation or use.** This is an unapproved mirroring-only prototype. Normal receiver launch stays disabled; security CI builds unpublished experimental candidates. Signed distribution and independent review remain pending.
+**No version is currently approved for installation or use.** This is an unapproved mirroring-only prototype. Normal receiver launch stays disabled; automatic security CI builds unpublished experimental candidates. Signed distribution and independent review remain pending.
 
 See [the security review](docs/SECURITY_REVIEW.md) and [security issue #2](https://github.com/henrywork059/iPhone-screen-mirroring/issues/2).
 
@@ -26,4 +26,4 @@ A successful CI job verifies only the checks listed in that job. It is **not** a
 
 [Current source hardening, test evidence and outstanding release gates](docs/SECURITY_HARDENING_STATUS.md).
 
-No new unsigned executable artifacts are uploaded. Do not disable Smart App Control or bypass Windows Security warnings to run previous test ZIPs.
+An explicitly acknowledged manual Actions run can upload a three-day **unsigned experimental diagnostic ZIP**; automatic CI cannot publish it. This does not make the binary approved or trusted. Do not disable Smart App Control or bypass Windows Security warnings to run any test ZIP.

@@ -6,14 +6,25 @@ Unlike the offline GUI preview, this workflow **compiles, bundles, and enables a
 
 The first experimental job passed on [November 5, 2026](https://github.com/henrywork059/iPhone-screen-mirroring/actions/runs/42001238384) and uploaded the `iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY` artifact. A subsequent build additionally checks that the experimental compile-time switch is truly enabled.
 
-## Current secure build policy
+## Download the unsigned experimental ZIP (manual request only)
 
-The [AirPlay native security workflow](../.github/workflows/experimental-airplay-beta.yml)
-compiles an unpublished candidate, runs exact-source patch checks,
-native dependency verification, the offline loader check, and a native
-SBOM generation step. It does **not** upload Windows executable artifacts.
-A successful CI run is not an independent security audit, and the untrusted
-native listener is not yet approved for device testing.
+Use [AirPlay mirroring-only experimental build](../.github/workflows/experimental-airplay-beta.yml).
+
+1. Open **Actions** and choose **AirPlay mirroring-only experimental build (manual ZIP opt-in)**.
+2. Select **Run workflow**, branch `main`, and check **I understand this is unsigned...**.
+3. Open the resulting **successful** workflow run.
+4. Under **Artifacts**, download
+   `iPhoneMirror-MIRROR-ONLY-UNSIGNED-EXPERIMENTAL`.
+5. Extract the downloaded artifact ZIP, then extract the inner
+   `iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY.zip`. Keep
+   `MirrorControl.exe`, `native/`, and `config/` together.
+
+The ZIP is unsigned and is **not approved for normal installation or use**.
+It may be rejected by Windows Smart App Control; **do not disable Smart App
+Control, Defender, or Windows Firewall or add exclusions**. A separate
+trusted, security-reviewed signed release is still required for dependable
+use. Normal automatic CI does **not** upload this package. Manually
+requested artifacts expire after **3 days**.
 
 See [Security hardening status](SECURITY_HARDENING_STATUS.md).
 
@@ -24,7 +35,7 @@ See [Security hardening status](SECURITY_HARDENING_STATUS.md).
 - Builds a WinForms controller with the opt-in `EXPERIMENTAL_RECEIVER` switch. **Normal/default builds remain blocked.**
 - Embeds the SHA-256 of the exact bundled UxPlay executable in the controller at build time and refuses to launch any other file.
 - Asks for explicit confirmation **at every start**, validates Windows Private connection profiles, uses upstream `-pw` without password to show a new random 4-digit PIN each connection.
-- Uploads a short-lived TEST artifact containing the GUI, patched backend, GStreamer runtime files and upstream patched corresponding source with license notices.
+- Uploads a short-lived **unsigned** ZIP only on an explicitly acknowledged manual Actions run; includes the GUI, patched backend, GStreamer runtime and corresponding source/licensing notices.
 
 ## Higher-quality mirroring profiles (new)
 
@@ -50,12 +61,11 @@ UxPlay opens video in a separate GStreamer window. The PIN is printed in a separ
 
 ## Security and installation guidance
 
-Do not use historical unsigned GitHub Actions ZIPs, install the prototype,
-disable Windows Smart App Control, disable Defender, add security exclusions,
-or broaden firewall permissions to make an experimental receiver run.
-The repository currently supports **source review and offline tests**.
-Release requires an independent security audit, proper signed binaries,
-a controlled firewall review and validated iPhone compatibility.
+The unsigned ZIP is provided solely as an **opt-in experimental diagnostic
+artifact**. Source-level tests do not establish complete AirPlay network
+safety. No version has independent security approval, hardware verification,
+or trusted publisher signing. **Do not bypass a Smart App Control block.**
+Continue using an approved signed mirroring solution for normal use.
 
 ## Licensing and source
 

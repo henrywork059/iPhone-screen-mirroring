@@ -2,7 +2,7 @@
 
 > **DO NOT INSTALL OR RUN HISTORICAL BETA ZIPS.** Smart App Control must remain
 > enabled. Our experimental native receiver remains under security review,
-> and no new unsigned executable artifacts are distributed.
+> and no automatic unsigned executable artifacts are distributed.
 > [Security hardening status](SECURITY_HARDENING_STATUS.md) is the authoritative
 > current release policy. The steps below are **future test criteria**, not
 > current authorization to run a network receiver.
@@ -27,7 +27,7 @@
 
 The offline Windows source checks, native C regression workflows,
 libFuzzer tests and unpublished binary/package checks can run in CI.
-No unsigned Windows executable should be downloaded or launched.
+An unsigned experimental ZIP can be manually downloaded for inspection, but must not be treated as approved for ordinary installation. Smart App Control remains enabled; if it blocks the executable, do not bypass it.
 For physical tests after independent review and trusted publisher signing,
 use the future checklist below.
 

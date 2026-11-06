@@ -66,20 +66,31 @@ jobs:
             throw 'Opt-in and default release gates are not separated.'
           }
           Write-Host 'Emergency security hold remains active. This is not an audit.'
-      - name: Enforce unsigned artifact publishing hold
+      - name: Enforce automatic unsigned artifact publishing hold
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          foreach ($file in @('.github/workflows/experimental-airplay-beta.yml',
-                               '.github/workflows/controller-package.yml')) {
-            $source = Get-Content $file -Raw
-            if ($source -match 'actions/upload-artifact' -or
-                $source -match 'gh release (create|upload)' -or
-                $source -match 'softprops/action-gh-release') {
-              throw "SECURITY HOLD: unsigned artifact publishing action present in $file"
-            }
+          $offline = Get-Content .github/workflows/controller-package.yml -Raw
+          if ($offline -match 'actions/upload-artifact|gh release (create|upload)|softprops/action-gh-release') {
+            throw 'SECURITY HOLD: offline controller must not publish an unsigned ZIP.'
           }
-          Write-Host 'Unsigned receiver and controller artifact uploads remain disabled.'
+          $beta = Get-Content .github/workflows/experimental-airplay-beta.yml -Raw
+          if ($beta -match 'gh release (create|upload)|softprops/action-gh-release') {
+            throw 'SECURITY HOLD: experimental beta must not create GitHub Releases.'
+          }
+          if ($beta -notmatch 'type: boolean' -or
+              $beta -notmatch 'acknowledge_unsigned:' -or
+              $beta -notmatch "default: false") {
+            throw 'Unsigned download acknowledgement is missing or enabled by default.'
+          }
+          $requiredGuard = "if: " + '$' + "{{ github.event_name == 'workflow_dispatch' && inputs.acknowledge_unsigned }}"
+          if (-not $beta.Contains($requiredGuard)) {
+            throw 'SECURITY HOLD: unsigned ZIP uploads must be manual and explicitly acknowledged.'
+          }
+          if ($beta -notmatch 'uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f') {
+            throw 'Manual unsigned beta upload is not pinned to the checked Node 24-compatible action.'
+          }
+          Write-Host 'Automatic unsigned publication blocked; manual diagnostic ZIP requires explicit acknowledgement.'
       - name: Verify signed release cannot bypass review or publisher checks
         shell: pwsh
         run: |
