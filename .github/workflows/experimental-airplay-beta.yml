@@ -1,4 +1,4 @@
-name: AirPlay mirroring-only experimental ZIP (manual download)
+name: AirPlay mirroring-only experimental TEST ZIP
 
 on:
   push:
@@ -174,23 +174,15 @@ jobs:
           Write-Host ('Experimental test ZIP bytes: ' + $zip.Length)
           Write-Host ('Experimental test ZIP SHA-256: ' + $digest)
           Write-Host ('Pinned receiver SHA-256 embedded in GUI: ' + $sha)
-      # Normal push builds do not publish executables. Only an explicit
-      # workflow_dispatch may upload this short-lived UNSIGNED diagnostic
-      # package. This is NOT a trusted release.
-      - name: Verify normal CI keeps the unsigned publishing hold
-        if: ${{ github.event_name != 'workflow_dispatch' }}
-        shell: pwsh
-        run: |
-          if (-not (Test-Path _beta/iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY.zip)) {
-            throw 'The experimental package is missing.'
-          }
-          Write-Host 'Normal CI does not publish unsigned executable packages.'
-      - name: Upload UNSIGNED experimental test ZIP (manual run only)
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+      # Like prior TEST builds, successful main-branch builds include the
+      # unsigned diagnostic ZIP under Artifacts. This does not enable a
+      # security bypass or a trusted Windows release.
+      - name: Upload unsigned mirroring-only TEST ZIP
+        if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
-          name: iPhoneMirror-MIRROR-ONLY-UNSIGNED-EXPERIMENTAL
+          name: iPhoneMirror-Experimental-AirPlay-TEST
           path: _beta/iPhoneMirror-Experimental-AirPlay-MIRROR-ONLY.zip
-          retention-days: 3
+          retention-days: 7
           if-no-files-found: error
           compression-level: 0
