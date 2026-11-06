@@ -1,0 +1,96 @@
+name: Signed Windows mirroring release (review and signing required)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Windows release version, e.g. 0.1.0
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  signed-windows-release:
+    # Configure this GitHub Environment with REQUIRED human reviewers.
+    # Do not enable it until the external audit and isolated device tests pass.
+    environment: approved-windows-release
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check external review and test authorization for this exact commit
+        shell: pwsh
+        env:
+          SECURITY_REVIEWED_SHA: ${{ vars.SECURITY_REVIEWED_SHA }}
+          DEVICE_TESTED_SHA: ${{ vars.DEVICE_TESTED_SHA }}
+          TRUSTED_PUBLISHER_SUBJECT: ${{ vars.TRUSTED_PUBLISHER_SUBJECT }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:GITHUB_SHA -ne $env:SECURITY_REVIEWED_SHA -or
+              $env:GITHUB_SHA -ne $env:DEVICE_TESTED_SHA -or
+              [string]::IsNullOrWhiteSpace($env:TRUSTED_PUBLISHER_SUBJECT)) {
+            throw 'SECURITY HOLD: independent audit, real iPhone test and approved publisher must match this exact commit.'
+          }
+          if ($env:RELEASE_VERSION -notmatch '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$') {
+            throw 'Invalid release version.'
+          }
+          Write-Host 'Preflight release authorization has passed for an exact reviewed commit.'
+      - name: Checkout source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: 8.0.x
+      - name: Install MSYS2 native build environment
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-openssl
+            mingw-w64-ucrt-x86_64-libplist
+            mingw-w64-ucrt-x86_64-gstreamer
+            mingw-w64-ucrt-x86_64-gst-plugins-base
+            mingw-w64-ucrt-x86_64-gst-plugins-good
+            mingw-w64-ucrt-x86_64-gst-plugins-bad
+            mingw-w64-ucrt-x86_64-gst-libav
+            mingw-w64-ucrt-x86_64-json-glib
+      - name: Build patched AirPlay receiver and restricted native runtime offline
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          RECEIVER_STAGING_DIR="$(pwd)/_signed/native" bash scripts/ci/build-full-receiver-windows.sh
+          bash scripts/ci/stage-native-runtime.sh "$(pwd)/_signed/native"
+          if [[ -d /ucrt64/share/licenses ]]; then
+            cp -R /ucrt64/share/licenses "$(pwd)/_signed/native/source-notices/MSYS2-third-party-licenses"
+          fi
+          pacman -Q > _signed/native/source-notices/MSYS2-installed-package-inventory.txt
+          test -s _signed/native/source-notices/uxplay-patched-corresponding-source.tar.gz
+      - name: Sign and verify every Windows executable and native dependency
+        shell: pwsh
+        env:
+          WINDOWS_SIGNING_PFX_BASE64: ${{ secrets.WINDOWS_SIGNING_PFX_BASE64 }}
+          WINDOWS_SIGNING_PFX_PASSWORD: ${{ secrets.WINDOWS_SIGNING_PFX_PASSWORD }}
+          TRUSTED_PUBLISHER_SUBJECT: ${{ vars.TRUSTED_PUBLISHER_SUBJECT }}
+          SECURITY_REVIEWED_SHA: ${{ vars.SECURITY_REVIEWED_SHA }}
+          DEVICE_TESTED_SHA: ${{ vars.DEVICE_TESTED_SHA }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          pwsh -NoProfile -File scripts/ci/Build-ApprovedSignedRelease.ps1 -NativeRoot _signed/native -Version $env:RELEASE_VERSION -OutputDirectory _signed/release
+          if ($LASTEXITCODE -ne 0) { throw 'Approved Windows signing/package build failed.' }
+      - name: Publish signed executable only after all checks succeed
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: iPhoneMirror-win-x64-signed
+          path: _signed/release/iPhoneMirror-win-x64-signed-${{ inputs.version }}.zip
+          retention-days: 7
+          if-no-files-found: error
+      # Ordinary push CI does not use this workflow and publishes NO unsigned executable.
