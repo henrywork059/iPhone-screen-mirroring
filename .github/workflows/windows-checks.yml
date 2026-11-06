@@ -66,33 +66,32 @@ jobs:
             throw 'Opt-in and default release gates are not separated.'
           }
           Write-Host 'Emergency security hold remains active. This is not an audit.'
-      - name: Verify unsigned ZIP can only be published by manual workflow dispatch
+      - name: Verify downloadable TEST artifact stays main-branch only
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $offline = Get-Content .github/workflows/controller-package.yml -Raw
           if ($offline -match 'actions/upload-artifact|gh release (create|upload)|softprops/action-gh-release') {
-            throw 'SECURITY HOLD: offline controller must not publish an unsigned ZIP.'
+            throw 'Offline controller must not publish unsigned artifacts.'
           }
           $beta = Get-Content .github/workflows/experimental-airplay-beta.yml -Raw
-          if ($beta -match 'gh release (create|upload)|softprops/action-gh-release') {
-            throw 'SECURITY HOLD: experimental workflow must not create GitHub Releases.'
-          }
-          if ($beta -notmatch '(?m)^  workflow_dispatch:' -or
+          if ($beta -match 'gh release (create|upload)|softprops/action-gh-release' -or
               $beta -match 'acknowledge_unsigned|ACKNOWLEDGE_UNSIGNED') {
-            throw 'Manual download workflow must not have a broken acknowledgement checkbox.'
+            throw 'The TEST workflow contains an unsafe release or broken checkbox.'
           }
-          $manual = "if: " + '$' + "{{ github.event_name == 'workflow_dispatch' }}"
-          if (-not $beta.Contains($manual)) {
-            throw 'SECURITY HOLD: unsigned package can only be uploaded on workflow_dispatch.'
+          $requiredGuard = "if: " + '$' + "{{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}"
+          if (-not $beta.Contains($requiredGuard)) {
+            throw 'Unsigned TEST artifact must only upload on main-branch builds.'
           }
-          if ($beta -notmatch 'uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f') {
-            throw 'Manual upload is not pinned to Node 24-compatible action.'
+          if ($beta -notmatch 'name: iPhoneMirror-Experimental-AirPlay-TEST' -or
+              $beta -notmatch 'retention-days: 7' -or
+              $beta -notmatch 'uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f') {
+            throw 'One-click TEST download is missing or unpinned.'
           }
-          if ($beta -notmatch 'Do NOT disable Smart App Control') {
-            throw 'Experimental download must retain the Smart App Control warning.'
+          if ($beta -notmatch 'Smart App Control may block this UNSIGNED test bundle') {
+            throw 'Unsigned Windows warning must be retained.'
           }
-          Write-Host 'Manual-only unsigned ZIP publication is correctly gated; automatic uploads remain blocked.'
+          Write-Host 'TEST ZIP auto-upload is limited to main-branch builds; signed release approval remains independent.'
       - name: Verify signed release cannot bypass review or publisher checks
         shell: pwsh
         run: |
