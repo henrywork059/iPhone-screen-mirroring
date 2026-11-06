@@ -84,8 +84,17 @@ internal static class ExperimentalBuildIdentity
     if ($LASTEXITCODE -ne 0) { throw 'Windows controller compilation failed.' }
     Copy-Item -LiteralPath $native -Destination (Join-Path $desktop 'native') -Recurse
 
-    & $signTool sign /f $pfxPath /p $env:WINDOWS_SIGNING_PFX_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 (Join-Path $desktop 'MirrorControl.exe')
-    if ($LASTEXITCODE -ne 0) { throw 'Controller signature failed.' }
+    # .NET single-file publish may still emit root-level native DLLs.
+    # Sign those too, but never re-sign native/ after its manifest is bound.
+    $guiBinaries = @(Get-ChildItem -LiteralPath $desktop -File |
+        Where-Object { $_.Extension -in @('.exe','.dll') })
+    if (-not (Test-Path (Join-Path $desktop 'MirrorControl.exe'))) {
+        throw 'Windows GUI binary was not produced.'
+    }
+    foreach ($file in $guiBinaries) {
+        & $signTool sign /f $pfxPath /p $env:WINDOWS_SIGNING_PFX_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $file.FullName
+        if ($LASTEXITCODE -ne 0) { throw "Controller binary signing failed: $($file.Name)" }
+    }
     & pwsh -NoProfile -File scripts/ci/Assert-TrustedWindowsSignatures.ps1 -PackageRoot $desktop -ExpectedPublisherSubject $env:TRUSTED_PUBLISHER_SUBJECT
     if ($LASTEXITCODE -ne 0) { throw 'Signed package contains untrusted executable code.' }
 
