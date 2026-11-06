@@ -6,8 +6,7 @@ blocked because the receiver has not passed independent review and testing.
 
 The manual workflow [Signed Windows mirroring release](../.github/workflows/signed-windows-release.yml)
 now creates a **signed, mirroring-only Windows ZIP** only after external
-reviewers and a trusted publisher identity have been configured. Ordinary
-push workflows do not upload executable files. Never disable Smart App Control,
+reviewers and a trusted publisher identity have been configured. Only the separate experimental TEST workflow publishes unsigned diagnostic ZIPs from `main`. The approved signed release workflow remains independent. Never disable Smart App Control,
 Defender or Windows Firewall as part of this process.
 
 ## What must happen before downloading an executable
