@@ -86,7 +86,7 @@ public sealed class MirrorForm : Form
         _quality.ForeColor = Color.White;
         foreach (MirrorQualityPreset preset in MirrorQualityPreset.Options)
             _quality.Items.Add(preset);
-        _quality.SelectedIndex = 2; // Prefer higher resolution; 1080p fallback is selectable.
+        _quality.SelectedIndex = MirrorQualityPreset.DefaultIndex; // Begin with compatible H.264; HEVC remains optional.
         root.Controls.Add(_quality, 0, 7);
 
         var actions = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight };
@@ -179,51 +179,56 @@ public sealed class MirrorForm : Form
             SetStatus("Receiver name must be 1–40 basic Latin characters.");
             return;
         }
-        try { ReceiverIdentity.Validate(executable); }
-        catch (Exception ex)
-        {
-            SetStatus(ex.Message);
-            return;
-        }
-        if (!File.Exists(executable))
-        {
-            SetStatus("UxPlay not found. Complete docs/WINDOWS_SETUP.md first.");
-            return;
-        }
-
         _starting = true;
         _start.Enabled = false;
-        SetStatus("Checking Windows network profiles...");
         try
         {
+            // The native bundle includes many third-party files; hashing all of
+            // them synchronously on the UI thread can appear to freeze Start.
+            SetStatus("Verifying bundled receiver files...");
+            Append("Checking receiver and native dependency hashes. No network listener is active yet.");
+            await Task.Run(() => ReceiverIdentity.Validate(executable));
+
+            SetStatus("Checking Windows network and firewall settings...");
             var (allowed, message) = await NetworkGuard.CheckAsync();
             Append("Network: " + message);
             if (!allowed)
             {
-                SetStatus("Blocked by network safety preflight.");
+                Append("BLOCKED BY NETWORK SAFETY PREFLIGHT: " + message);
+                SetStatus("Network preflight blocked; see specific reason below.");
                 return;
             }
 
             _receiver?.Dispose();
             _receiver = new ReceiverProcess();
             _receiver.Output += line => Append(line);
-            _receiver.Exited += () => SafeUi(() =>
+            _receiver.Exited += code => SafeUi(() =>
             {
                 _start.Enabled = !BackendSecurityGate.IsBlocked;
                 _stop.Enabled = false;
-                SetStatus("Receiver stopped.");
+                string reason = code.HasValue ? "Receiver process exited (code " + code.Value + ")." : "Receiver process exited.";
+                Append(reason + " Check the native UxPlay console for details.");
+                SetStatus(reason);
             });
             MirrorQualityPreset preset = _quality.SelectedItem as MirrorQualityPreset
                 ?? MirrorQualityPreset.Options[1];
             Append("Requested mirror quality: " + preset.Label + ". The iPhone may transmit at a lower resolution/frame rate.");
             _receiver.Start(executable, name, preset);
+            if (!_receiver.IsRunning)
+            {
+                Append("UxPlay stopped immediately. Check the UxPlay console and Windows Security history.");
+                SetStatus("Receiver exited immediately; see output.");
+                return;
+            }
             _stop.Enabled = true;
-            SetStatus("Receiver running. Read PIN in console; select '" + name + "' on iPhone.");
+            Append("If the iPhone cannot find this PC, check that both are on the same trusted network. Do not bypass Windows Firewall or Smart App Control.");
+            Append("Video appears in a separate GStreamer window AFTER iPhone connection; not inside this controller.");
+            SetStatus("Receiver started; look for '" + name + "' in iPhone Screen Mirroring.");
         }
         catch (Exception ex)
         {
-            Append("ERROR: " + ex.Message);
-            SetStatus("Could not start receiver.");
+            Append("START FAILED: " + ex.Message);
+            SetStatus("Start failed; see details in Output.");
         }
         finally
         {

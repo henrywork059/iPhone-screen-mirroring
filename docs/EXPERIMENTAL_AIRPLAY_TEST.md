@@ -39,7 +39,26 @@ See [Security hardening status](SECURITY_HARDENING_STATUS.md).
 
 ## Higher-quality mirroring profiles (new)
 
-The Windows controller now offers **Compatible 1080p/30**, **Smooth 1080p/60**, **Sharper 1440p/60** (default), and **Ultra 4K/30**. The last two request UxPlay HEVC support (`-h265`) and require matching GStreamer H.265 parser/decoder plugins, which CI checks. A requested resolution/frame rate is advisory; some iPhones transmit less than requested. If a high-quality option fails, select a **1080p** profile and reconnect.
+The Windows controller defaults to **Compatible 1080p/30 (H.264)**, with **Smooth 1080p/60**, **Sharper 1440p/60 (HEVC)** and **Ultra 4K/30 (HEVC)** available. The last two request UxPlay HEVC support (`-h265`) and require matching GStreamer H.265 parser/decoder plugins, which CI checks. A requested resolution/frame rate is advisory; some iPhones transmit less than requested. If a high-quality option fails, select a **1080p** profile and reconnect.
+
+## Troubleshooting a receiver that does not start
+
+- The Start button is enabled only in the specifically packaged experimental
+  test controller, not the normal/offline source build. **Launch blocked**
+  means you opened the offline build.
+- The controller validates the native files before opening a listener. This
+  may take time; the UI shows **Verifying bundled receiver files**.
+- If the network preflight rejects startup, read the exact reason in the
+  controller Output area. Do not weaken firewall or network security to pass.
+- If Windows blocks the unsigned `uxplay.exe`, the controller now shows a
+  descriptive Windows application-control error; check Windows Security
+  Protection history, but do not bypass Smart App Control.
+- UxPlay opens its own console for the pairing PIN, and GStreamer opens a
+  **separate video window only after an iPhone starts streaming**. The
+  controller does not display the video itself.
+- Begin with **Compatible 1080p/30**, not HEVC. If it starts but the iPhone
+  cannot discover it, verify both devices are on the same trusted network
+  and inspect the existing firewall policy; do not create broad exceptions.
 
 ## Mirroring-only and Smart App Control
 

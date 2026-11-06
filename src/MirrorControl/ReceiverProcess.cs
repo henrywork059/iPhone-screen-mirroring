@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.ComponentModel;
 using System.IO;
 
 namespace MirrorControl;
@@ -9,7 +10,7 @@ internal sealed class ReceiverProcess : IDisposable
     private Process? _process;
 
     internal event Action<string>? Output;
-    internal event Action? Exited;
+    internal event Action<int?>? Exited;
 
     internal bool IsRunning
     {
@@ -82,13 +83,39 @@ internal sealed class ReceiverProcess : IDisposable
             info.Environment["GST_PLUGIN_SCANNER_1_0"] = scanner;
 
         var process = new Process { StartInfo = info, EnableRaisingEvents = true };
-        process.Exited += (_, _) => Exited?.Invoke();
-        if (!process.Start())
+        process.Exited += (_, _) =>
+        {
+            int? exitCode = null;
+            try { exitCode = process.ExitCode; }
+            catch (InvalidOperationException) { }
+            Exited?.Invoke(exitCode);
+        };
+        try
+        {
+            if (!process.Start())
+                throw new InvalidOperationException("UxPlay did not start.");
+            _process = process;
+        }
+        catch (Win32Exception ex) when (ex.NativeErrorCode is 577 or 1260)
         {
             process.Dispose();
-            throw new InvalidOperationException("UxPlay did not start.");
+            throw new InvalidOperationException(
+                "Windows application-control policy blocked the unsigned UxPlay receiver. " +
+                "Check Windows Security > Protection history. Keep Smart App Control enabled; " +
+                "this package is not a trusted signed Windows release.", ex);
         }
-        _process = process;
+        catch (Win32Exception ex) when (ex.NativeErrorCode == 5)
+        {
+            process.Dispose();
+            throw new InvalidOperationException(
+                "Windows denied access to the UxPlay receiver. Check Windows Security > Protection history " +
+                "and verify the package was extracted completely. Do not disable protection to bypass a block.", ex);
+        }
+        catch
+        {
+            process.Dispose();
+            throw;
+        }
         // A console is required: upstream UxPlay may buffer PIN output when redirected.
         // Keeping a visible console ensures the random PIN is displayed immediately.
         Output?.Invoke("UxPlay started in its own console; read the PIN there.");

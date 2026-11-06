@@ -8,6 +8,9 @@ namespace MirrorControl;
 /// </summary>
 internal sealed record MirrorQualityPreset(string Label, string Resolution, int MaximumFps, bool EnableHevc)
 {
+    // Conservative startup profile; optional HEVC can be selected after connectivity is confirmed.
+    internal const int DefaultIndex = 0;
+
     internal static IReadOnlyList<MirrorQualityPreset> Options { get; } = new[]
     {
         new MirrorQualityPreset("Compatible — 1080p / 30 fps", "1920x1080@60", 30, false),

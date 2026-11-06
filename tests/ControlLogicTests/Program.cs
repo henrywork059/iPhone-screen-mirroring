@@ -7,6 +7,10 @@ static void Check(bool expected, string label)
 }
 
 Check(MirrorQualityPreset.Options.Count == 4, "four quality profiles");
+Check(MirrorQualityPreset.DefaultIndex == 0, "1080p H.264 compatibility is startup default");
+Check(!MirrorQualityPreset.Options[MirrorQualityPreset.DefaultIndex].EnableHevc, "startup does not require HEVC");
+Check(MirrorQualityPreset.Options[MirrorQualityPreset.DefaultIndex].GetUxPlayOptions().SequenceEqual(
+    new[] { "-s", "1920x1080@60", "-fps", "30" }), "startup uses conservative UxPlay options");
 Check(MirrorQualityPreset.Options[2].EnableHevc, "1440p enables HEVC");
 Check(!MirrorQualityPreset.Options[1].EnableHevc, "1080p does not require HEVC");
 Check(MirrorQualityPreset.Options[2].GetUxPlayOptions().SequenceEqual(
