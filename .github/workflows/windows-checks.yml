@@ -10,6 +10,7 @@ on:
       - 'scripts/ci/*.ps1'
       - '.github/workflows/experimental-airplay-beta.yml'
       - '.github/workflows/controller-package.yml'
+      - '.github/workflows/signed-windows-release.yml'
       - 'config/**'
       - '.github/workflows/windows-checks.yml'
   pull_request:
@@ -30,7 +31,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $files = @('scripts/Start-Mirroring.ps1', 'scripts/Check-Prerequisites.ps1', 'scripts/Inspect-TestReadiness.ps1', 'scripts/ci/Test-NoNetworkRuntimeLoad.ps1', 'scripts/ci/New-NativeSbom.ps1', 'scripts/ci/Assert-TrustedWindowsSignatures.ps1')
+          $files = @('scripts/Start-Mirroring.ps1', 'scripts/Check-Prerequisites.ps1', 'scripts/Inspect-TestReadiness.ps1', 'scripts/ci/Test-NoNetworkRuntimeLoad.ps1', 'scripts/ci/New-NativeSbom.ps1', 'scripts/ci/Assert-TrustedWindowsSignatures.ps1', 'scripts/ci/Build-ApprovedSignedRelease.ps1')
           foreach ($path in $files) {
             $tokens = $null
             $parseErrors = $null
@@ -79,6 +80,30 @@ jobs:
             }
           }
           Write-Host 'Unsigned receiver and controller artifact uploads remain disabled.'
+      - name: Verify signed release cannot bypass review or publisher checks
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $workflow = Get-Content .github/workflows/signed-windows-release.yml -Raw
+          $script = Get-Content scripts/ci/Build-ApprovedSignedRelease.ps1 -Raw
+          foreach ($required in @(
+            'environment: approved-windows-release',
+            'SECURITY_REVIEWED_SHA',
+            'DEVICE_TESTED_SHA',
+            'TRUSTED_PUBLISHER_SUBJECT',
+            'secrets.WINDOWS_SIGNING_PFX_BASE64',
+            'secrets.WINDOWS_SIGNING_PFX_PASSWORD',
+            'Assert-TrustedWindowsSignatures.ps1'
+          )) {
+            if (($workflow + $script) -notmatch [regex]::Escape($required)) {
+              throw "Signed release missing approval/signature guard: $required"
+            }
+          }
+          if ($workflow -match '(?m)^  push:' -or
+              $workflow -match '(?m)^  release:') {
+            throw 'Signed executable release must not run on automatic pushes.'
+          }
+          Write-Host 'Signed release requires separate review, device approval, and trusted publisher signatures.'
       - name: Smoke-test CycloneDX generator with harmless synthetic files
         shell: pwsh
         run: |
