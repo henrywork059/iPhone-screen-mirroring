@@ -18,6 +18,23 @@ The **UI-only** self-contained Windows 11 preview can be built locally or in CI 
 
 It **does not contain UxPlay**, cannot mirror an iPhone, and will **not open an AirPlay listener**. Confirm that the window opens and clearly shows the disabled **Launch blocked** control. See [safe UI test instructions](docs/OFFLINE_CONTROLLER_PACKAGE.md). Do not bypass Windows security warnings for unsigned binaries.
 
+## Future Windows executable (.exe) — approved signed release only
+
+The [manual signed Windows release workflow](.github/workflows/signed-windows-release.yml)
+is prepared to build a self-contained `MirrorControl.exe` and the patched
+native UxPlay/GStreamer runtime. It publishes **only after** an independent
+security review, isolated real-iPhone test approval for the exact source
+commit, and trusted Authenticode signing and verification of all shipped
+EXEs/DLLs. The GitHub environment `approved-windows-release` must be
+configured with independent required reviewers and the publisher's secure
+signing credentials.
+
+**No downloadable signed EXE exists yet.** Smart App Control remains enabled
+and ordinary CI does not upload unsigned binaries. A legitimate trusted
+signature does not substitute for independent security validation or guarantee
+Smart App Control acceptance. For the future download location and required
+configuration, read [Signed Windows release instructions](docs/SIGNED_WINDOWS_RELEASE.md).
+
 ## Actual iPhone mirroring: security hold
 
 The project implements a local Windows AirPlay mirroring receiver, but it
