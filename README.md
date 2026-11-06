@@ -5,7 +5,7 @@ A local-first iPhone-to-Windows 11 AirPlay mirroring project.
 > **SECURITY HOLD — NO APPROVED WINDOWS RELEASE (2026-11-06):**
 > You can manually request an **unsigned experimental mirroring-only ZIP**
 > from [GitHub Actions](.github/workflows/experimental-airplay-beta.yml)
-> using **Run workflow** and checking the acknowledgement box.
+> using **Run workflow**; no additional acknowledgement checkbox is required.
 > The file is for diagnostic inspection and limited opt-in testing, **not an
 > approved or signed release**. Smart App Control may block it; never
 > disable or bypass Windows security protections to run it.

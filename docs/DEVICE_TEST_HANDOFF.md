@@ -27,7 +27,7 @@
 
 The offline Windows source checks, native C regression workflows,
 libFuzzer tests and unpublished binary/package checks can run in CI.
-An unsigned experimental ZIP can be manually downloaded for inspection, but must not be treated as approved for ordinary installation. Smart App Control remains enabled; if it blocks the executable, do not bypass it.
+An unsigned experimental ZIP can be requested manually for inspection, without any acknowledgement checkbox; it is not approved for ordinary installation. Smart App Control remains enabled; if it blocks the executable, do not bypass it.
 For physical tests after independent review and trusted publisher signing,
 use the future checklist below.
 

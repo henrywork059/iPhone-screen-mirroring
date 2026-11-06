@@ -94,7 +94,7 @@ repository-only workflow. Do not label a build production safe on CI success.
    `BackendSecurityGate.IsBlocked => true`; the PowerShell launcher is
    also blocked. Automatic CI and offline-controller builds **do not upload
    unsigned executable ZIPs**. The experimental workflow can upload an
-   **unsigned, explicitly acknowledged manual-only ZIP** retained for
+   **unsigned, manually triggered ZIP** retained for
    three days for inspection or limited testing. This is not an approved
    release or exception to Smart App Control. Do not bypass Windows
    warnings or use an unsigned prototype for routine installation.

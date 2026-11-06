@@ -26,4 +26,4 @@ A successful CI job verifies only the checks listed in that job. It is **not** a
 
 [Current source hardening, test evidence and outstanding release gates](docs/SECURITY_HARDENING_STATUS.md).
 
-An explicitly acknowledged manual Actions run can upload a three-day **unsigned experimental diagnostic ZIP**; automatic CI cannot publish it. This does not make the binary approved or trusted. Do not disable Smart App Control or bypass Windows Security warnings to run any test ZIP.
+A manually triggered GitHub Actions run can upload a three-day **unsigned experimental diagnostic ZIP**; automatic CI cannot publish it. This does not make the binary approved or trusted. Do not disable Smart App Control or bypass Windows Security warnings to run any test ZIP.

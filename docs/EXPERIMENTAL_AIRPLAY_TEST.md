@@ -10,8 +10,8 @@ The first experimental job passed on [November 5, 2026](https://github.com/henry
 
 Use [AirPlay mirroring-only experimental build](../.github/workflows/experimental-airplay-beta.yml).
 
-1. Open **Actions** and choose **AirPlay mirroring-only experimental build (manual ZIP opt-in)**.
-2. Select **Run workflow**, branch `main`, and check **I understand this is unsigned...**.
+1. Open **Actions** and choose **AirPlay mirroring-only experimental ZIP (manual download)**.
+2. Select **Run workflow**, choose branch `main`, then click the green **Run workflow** button. There is no acknowledgement checkbox.
 3. Open the resulting **successful** workflow run.
 4. Under **Artifacts**, download
    `iPhoneMirror-MIRROR-ONLY-UNSIGNED-EXPERIMENTAL`.
@@ -35,7 +35,7 @@ See [Security hardening status](SECURITY_HARDENING_STATUS.md).
 - Builds a WinForms controller with the opt-in `EXPERIMENTAL_RECEIVER` switch. **Normal/default builds remain blocked.**
 - Embeds the SHA-256 of the exact bundled UxPlay executable in the controller at build time and refuses to launch any other file.
 - Asks for explicit confirmation **at every start**, validates Windows Private connection profiles, uses upstream `-pw` without password to show a new random 4-digit PIN each connection.
-- Uploads a short-lived **unsigned** ZIP only on an explicitly acknowledged manual Actions run; includes the GUI, patched backend, GStreamer runtime and corresponding source/licensing notices.
+- Uploads a short-lived **unsigned** ZIP only on a deliberately triggered manual Actions run; includes the GUI, patched backend, GStreamer runtime and corresponding source/licensing notices.
 
 ## Higher-quality mirroring profiles (new)
 
@@ -61,7 +61,7 @@ UxPlay opens video in a separate GStreamer window. The PIN is printed in a separ
 
 ## Security and installation guidance
 
-The unsigned ZIP is provided solely as an **opt-in experimental diagnostic
+The unsigned ZIP is provided solely as a **manually requested experimental diagnostic
 artifact**. Source-level tests do not establish complete AirPlay network
 safety. No version has independent security approval, hardware verification,
 or trusted publisher signing. **Do not bypass a Smart App Control block.**

@@ -66,7 +66,7 @@ jobs:
             throw 'Opt-in and default release gates are not separated.'
           }
           Write-Host 'Emergency security hold remains active. This is not an audit.'
-      - name: Enforce automatic unsigned artifact publishing hold
+      - name: Verify unsigned ZIP can only be published by manual workflow dispatch
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -76,21 +76,23 @@ jobs:
           }
           $beta = Get-Content .github/workflows/experimental-airplay-beta.yml -Raw
           if ($beta -match 'gh release (create|upload)|softprops/action-gh-release') {
-            throw 'SECURITY HOLD: experimental beta must not create GitHub Releases.'
+            throw 'SECURITY HOLD: experimental workflow must not create GitHub Releases.'
           }
-          if ($beta -notmatch 'type: boolean' -or
-              $beta -notmatch 'acknowledge_unsigned:' -or
-              $beta -notmatch "default: false") {
-            throw 'Unsigned download acknowledgement is missing or enabled by default.'
+          if ($beta -notmatch '(?m)^  workflow_dispatch:' -or
+              $beta -match 'acknowledge_unsigned|ACKNOWLEDGE_UNSIGNED') {
+            throw 'Manual download workflow must not have a broken acknowledgement checkbox.'
           }
-          $requiredGuard = "if: " + '$' + "{{ github.event_name == 'workflow_dispatch' && inputs.acknowledge_unsigned }}"
-          if (-not $beta.Contains($requiredGuard)) {
-            throw 'SECURITY HOLD: unsigned ZIP uploads must be manual and explicitly acknowledged.'
+          $manual = "if: " + '$' + "{{ github.event_name == 'workflow_dispatch' }}"
+          if (-not $beta.Contains($manual)) {
+            throw 'SECURITY HOLD: unsigned package can only be uploaded on workflow_dispatch.'
           }
           if ($beta -notmatch 'uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f') {
-            throw 'Manual unsigned beta upload is not pinned to the checked Node 24-compatible action.'
+            throw 'Manual upload is not pinned to Node 24-compatible action.'
           }
-          Write-Host 'Automatic unsigned publication blocked; manual diagnostic ZIP requires explicit acknowledgement.'
+          if ($beta -notmatch 'Do NOT disable Smart App Control') {
+            throw 'Experimental download must retain the Smart App Control warning.'
+          }
+          Write-Host 'Manual-only unsigned ZIP publication is correctly gated; automatic uploads remain blocked.'
       - name: Verify signed release cannot bypass review or publisher checks
         shell: pwsh
         run: |

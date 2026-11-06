@@ -1,4 +1,4 @@
-name: AirPlay mirroring-only experimental build (manual ZIP opt-in)
+name: AirPlay mirroring-only experimental ZIP (manual download)
 
 on:
   push:
@@ -12,12 +12,6 @@ on:
       - 'tests/native/**'
       - '.github/workflows/experimental-airplay-beta.yml'
   workflow_dispatch:
-    inputs:
-      acknowledge_unsigned:
-        description: "I understand this is unsigned, unapproved for routine use, and Windows Smart App Control may block it; I will not disable protection"
-        type: boolean
-        required: true
-        default: false
 
 permissions:
   contents: read
@@ -27,15 +21,14 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 35
     steps:
-      - name: Require explicit acknowledgement for manually requested unsigned ZIP
+      - name: Explain experimental manual download limitations
         if: ${{ github.event_name == 'workflow_dispatch' }}
         shell: pwsh
-        env:
-          ACKNOWLEDGE_UNSIGNED: ${{ inputs.acknowledge_unsigned }}
         run: |
-          if ($env:ACKNOWLEDGE_UNSIGNED -ne 'true') {
-            throw 'Unsigned experimental download requires explicit acknowledgement. Do not disable Smart App Control.'
-          }
+          Write-Host 'MANUAL EXPERIMENTAL BUILD: unsigned Windows mirroring-only diagnostic ZIP.'
+          Write-Host 'Not a reviewed or trusted signed release. Windows Smart App Control may block it.'
+          Write-Host 'Do NOT disable Smart App Control, Windows Defender or Windows Firewall.'
+          Write-Host 'Automatic push builds never upload an unsigned ZIP.'
       - name: Checkout project source
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - name: Set up .NET 8
@@ -182,8 +175,8 @@ jobs:
           Write-Host ('Experimental test ZIP SHA-256: ' + $digest)
           Write-Host ('Pinned receiver SHA-256 embedded in GUI: ' + $sha)
       # Normal push builds do not publish executables. Only an explicit
-      # workflow_dispatch with checked acknowledgement may upload this
-      # short-lived UNSIGNED diagnostic package. This is NOT a trusted release.
+      # workflow_dispatch may upload this short-lived UNSIGNED diagnostic
+      # package. This is NOT a trusted release.
       - name: Verify normal CI keeps the unsigned publishing hold
         if: ${{ github.event_name != 'workflow_dispatch' }}
         shell: pwsh
@@ -192,8 +185,8 @@ jobs:
             throw 'The experimental package is missing.'
           }
           Write-Host 'Normal CI does not publish unsigned executable packages.'
-      - name: Upload UNSIGNED experimental test ZIP (manual opt-in only)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.acknowledge_unsigned }}
+      - name: Upload UNSIGNED experimental test ZIP (manual run only)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: iPhoneMirror-MIRROR-ONLY-UNSIGNED-EXPERIMENTAL
